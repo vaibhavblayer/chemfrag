@@ -37,6 +37,9 @@
   \testcode{\chemfragring{pyrrole}{}}%
   \testcode{\chemfragring{cyclopentane}{exit=3}}%
   \testcode{\chemfragchain{4, 1=Cl}}%
+  % no exit: identical to the hand-written ring, no invisible bonds
+  \testcode{\chemfragring{benzene}{exit=none}}%
+  \testcode{\chemfragring{pyridine}{exit=none}}%
 }
 \TEST{defaults}{%
   \chemfragset{circle}%

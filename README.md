@@ -1,6 +1,6 @@
 # chemfrag — ready-made rings, chains and functional groups for chemfig
 
-Version 1.0.0 (2026-11-25)
+Version 1.0.1 (2026-11-25)
 
 `chemfrag` adds building blocks to [chemfig](https://ctan.org/pkg/chemfig):
 rings, zigzag chains and functional groups. A fragment is not a picture but a

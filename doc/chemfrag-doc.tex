@@ -233,16 +233,17 @@ Every key that takes a position (substituents, \key{atoms}, \key{bonds},
 
 \subsection{Where drawing continues: the exit atom}
 \pkg{chemfig} itself always continues a ring from the atom where the ring
-started. \pkg{chemfrag} adds two invisible bonds after the ring: one to its
-centre and one out to the \emph{exit atom}. The next bond therefore starts
-on the exit atom, and the \emph{relative} angle \verb|[::0]| points straight
-out of the ring.
+started. \pkg{chemfrag} adds invisible bonds after the ring: one to its
+centre and one out to the \emph{exit atom}, or a single tiny one when the exit
+atom is atom~1. The next bond therefore starts on the exit atom, and the
+\emph{relative} angle \verb|[::0]| points straight out of the ring.
 \begin{itemize}
   \item A ring that \textbf{starts the molecule} exits on atom~1.
   \item A ring \textbf{reached through a bond} exits on the opposite atom
         (atom~4 of a six-membered ring).
   \item \key{exit=}\meta{n} chooses any atom; \key{exit=none} removes the
-        invisible bonds and gives plain \pkg{chemfig} behaviour.
+        invisible bonds and gives exactly the ring you would write by hand.
+        Use it for rings that nothing continues from: it is also faster.
 \end{itemize}
 \begin{example}
 \chemfig{!{benzene*}{exit=2}-[::0]CH_3}\quad
@@ -545,16 +546,26 @@ draw arrows between them with \cs{chemmove} (two compilations needed):
         (\verb|\CF_lastaction|) to tell whether a ring starts the molecule. If
         a future \pkg{chemfig} removes it, rings behave as if a bond arrived
         and still draw correctly.
-  \item \pkg{chemfig} drawings take a lot of computation, so documents with
-        hundreds of molecules compile slowly. \pkg{chemfrag} itself adds one
-        expansion pass and two invisible bonds per ring. To speed up a large
-        document, compile structures once with the \pkg{standalone} class or
-        TikZ externalization.
+  \item \textbf{Speed.} A \pkg{chemfig} molecule is much slower to typeset
+        than the same lines drawn directly in TikZ, because \pkg{chemfig}
+        computes every bond (about 7--12\,ms each with pdf\LaTeX).
+        \pkg{chemfrag}'s own expansion costs about 2\,ms per fragment. Each
+        invisible helper bond costs as much as a real bond, so a ring with an
+        exit is slower than the hand-written ring:
+        one helper bond for an exit on atom~1, two for any other exit, plus a
+        tiny entry bond when the ring starts the molecule. A chain adds one
+        helper bond at its end. Write \key{exit=none} when nothing continues
+        from a fragment. In documents with many molecules, typeset each one
+        only once with the \pkg{memoize} package, TikZ externalization or the
+        \pkg{standalone} class.
 \end{itemize}
 
 % =====================================================================
 \section{Change history}
 \begin{description}[font=\sffamily\bfseries]
+  \item[1.0.1 (2026-11-25)] Fewer invisible helper bonds: an exit on atom~1
+    uses one bond instead of two, and a ring with \key{exit=none} has none,
+    so it is identical to the hand-written ring. Drawings are unchanged.
   \item[1.0.0 (2026-11-25)] First public release: 27 rings, generic rings,
     chains, 23 condensed and 18 structural groups, \cs{chemfragset},
     \cs{chemfragdefinering}, atom names for \cs{chemmove}.

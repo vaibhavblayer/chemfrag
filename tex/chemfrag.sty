@@ -21,7 +21,7 @@
 %% submolecule that turns into plain chemfig code, so fragments and
 %% hand-written chemfig code can be mixed freely inside \chemfig{...}.
 \NeedsTeXFormat{LaTeX2e}[2022-06-01]
-\ProvidesExplPackage{chemfrag}{2026-11-25}{1.0.0}
+\ProvidesExplPackage{chemfrag}{2026-11-25}{1.0.1}
   {Ready-made rings, chains and functional groups for chemfig}
 
 \RequirePackage{chemfig}
@@ -34,7 +34,7 @@
     \msg_error:nn { chemfrag } { old-chemfig }
   }
 
-\tl_const:Nn \c_chemfrag_version_tl { 1.0.0 }
+\tl_const:Nn \c_chemfrag_version_tl { 1.0.1 }
 \NewExpandableDocumentCommand \chemfragversion { } { \c_chemfrag_version_tl }
 
 \file_input:n { chemfrag-core.code.tex }

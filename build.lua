@@ -1,6 +1,6 @@
 -- build.lua for chemfrag (l3build)
 module  = "chemfrag"
-version = "1.0.0"
+version = "1.0.1"
 date    = "2026-11-25"
 
 -- sources live in tex/, documentation in doc/

@@ -13,12 +13,14 @@
 %% bond.  To *exit* at position p we add two invisible bonds:
 %%     position 1 --[::0, R]--> centre --[::180+(p-1)*360/n, R]--> position p
 %% with R = 1/(2 sin(180/n)), the circumradius in units of a bond length.
-%% The last bond then points straight outwards, so the user continues with
-%% "-[::0]" (straight on), "-[::60]", etc.
+%% For p = 1 a single tiny bond "[::180, 0.001]" is enough.  The last bond
+%% then points straight outwards, so the user continues with "-[::0]"
+%% (straight on), "-[::60]", etc.  Every invisible bond costs chemfig as much
+%% time as a real one, hence as few of them as possible.
 %%
-%% A ring that starts a molecule has no incoming bond; we give it a tiny
-%% invisible one at 180/n degrees, which reproduces chemfig's usual
-%% orientation and makes the arithmetic above valid.
+%% A ring that starts a molecule has no incoming bond; when it has an exit we
+%% give it a tiny invisible one at 180/n degrees, which reproduces chemfig's
+%% usual orientation and makes the arithmetic above valid.
 %%
 %% Numbering: "entry" is the number of position 1 (default 1); numbers run
 %% counter-clockwise (or clockwise with "clockwise").  All user keys
@@ -128,9 +130,15 @@
 %%   #5 = standalone, #6 = circle, #7 = keys
 \cs_new:Npn \__chemfrag_ring_emit:nnnnnnn #1#2#3#4#5#6#7
   {
-    % tiny entry bond for a ring that starts the molecule
+    % Tiny entry bond for a ring that starts the molecule.  It only fixes
+    % the reference angle for the exit jumps; without an exit chemfig's own
+    % orientation is the same, so the bond (a full chemfig bond, ~8 ms) is
+    % left out.
     \int_compare:nNnT {#5} = { 1 }
-      { \__chemfrag_jump:nn { \fp_eval:n { round(180/#2, 4) } } { 0.01 } }
+      {
+        \int_compare:nNnF {#1} = { 0 }
+          { \__chemfrag_jump:nn { \fp_eval:n { round(180/#2, 4) } } { 0.01 } }
+      }
     % atom of position 1, then the ring opening
     \__chemfrag_name:nn {#7} {#3}
     \__chemfrag_atom:nn {#7} {#3}
@@ -141,22 +149,31 @@
     \__chemfrag_ring_loop:nnnnnn { 2 } {#2} {#3} {#4} {#6} {#7}
     \__chemfrag_ring_bond:nnnnnn {#2} {#2} {#3} {#4} {#6} {#7}
     )
-    % exit: jump to the centre, then out to the exit atom
-    \int_compare:nNnF {#1} = { 0 }
+    % Exit.  On position 1 we are already on the atom; one tiny bond turned
+    % by 180 degrees makes "[::0]" point outwards.  Elsewhere: jump to the
+    % centre, then out to the exit atom.
+    \int_compare:nNnTF {#1} = { 1 }
       {
-        \__chemfrag_jump:nn { 0 }
-          { \fp_eval:n { round(1/(2*sind(180/#2)), 5) } }
-        \__chemfrag_jump:nn
+        \__chemfrag_jump:nn { 180 } { 0.001 }
+        \__chemfrag_phantom:nn {#7} {#3}
+      }
+      {
+        \int_compare:nNnF {#1} = { 0 }
           {
-            \fp_eval:n
+            \__chemfrag_jump:nn { 0 }
+              { \fp_eval:n { round(1/(2*sind(180/#2)), 5) } }
+            \__chemfrag_jump:nn
               {
-                round(180 + (#1 - 1) * 360 / #2
-                  - 360 * trunc((180 + (#1 - 1) * 360 / #2) / 360), 4)
+                \fp_eval:n
+                  {
+                    round(180 + (#1 - 1) * 360 / #2
+                      - 360 * trunc((180 + (#1 - 1) * 360 / #2) / 360), 4)
+                  }
               }
+              { \fp_eval:n { round(1/(2*sind(180/#2)), 5) } }
+            \exp_args:Nne \__chemfrag_phantom:nn {#7}
+              { \__chemfrag_ring_num:nnnn {#2} {#3} {#4} {#1} }
           }
-          { \fp_eval:n { round(1/(2*sind(180/#2)), 5) } }
-        \exp_args:Nne \__chemfrag_phantom:nn {#7}
-          { \__chemfrag_ring_num:nnnn {#2} {#3} {#4} {#1} }
       }
   }
 

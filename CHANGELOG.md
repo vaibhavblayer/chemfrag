@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 — 2026-11-25
+
+- Fewer invisible helper bonds (each costs chemfig as much as a real bond):
+  an exit on atom 1 uses one tiny bond instead of two, and `exit=none` emits
+  none, so it equals the hand-written ring. Drawings are unchanged.
+- Manual: speed notes (`exit=none`, memoize, externalization).
+
 ## 1.0.0 — 2026-11-25
 
 First public release.
