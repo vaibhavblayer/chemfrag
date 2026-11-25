@@ -1,0 +1,95 @@
+%% chemfrag-polymers.code.tex -- polymers (repeat units in brackets)
+%%
+%% Copyright (C) 2026 Vaibhav Blayer
+%% LaTeX Project Public License 1.3c or later (see chemfrag.sty).
+%%
+%% \chemfragpolymer[<keys>]{<repeat unit>} draws
+%%     <left> -[@{op}] <repeat unit> -[@{cl}] <right>
+%% with \chemfig and puts chemfig's \polymerdelim brackets on the two bonds
+%% that cross them.  <repeat unit> is either the name of a unit defined with
+%% \chemfragdefinepolymer (polyethylene, PVC, nylon66, ...) or chemfig code.
+%% Like \chemmove, the brackets need two compilations.
+
+\keys_define:nn { chemfrag / polymer }
+  {
+    n           .tl_set:N = \l__chemfrag_poly_n_tl ,
+    n           .initial:n = n ,
+    height      .tl_set:N = \l__chemfrag_poly_height_tl ,
+    height      .initial:n = 6pt ,
+    depth       .tl_set:N = \l__chemfrag_poly_depth_tl ,
+    depth       .initial:n = 6pt ,
+    delimiters  .tl_set:N = \l__chemfrag_poly_delims_tl ,
+    delimiters  .initial:n = {[]} ,
+    left        .tl_set:N = \l__chemfrag_poly_left_tl ,
+    right       .tl_set:N = \l__chemfrag_poly_right_tl ,
+    bond        .tl_set:N = \l__chemfrag_poly_bond_tl ,
+    bond        .initial:n = 1 ,
+    chemfig     .tl_set:N = \l__chemfrag_poly_chemfig_tl ,
+  }
+
+\int_new:N \g__chemfrag_poly_int
+
+%% \chemfragdefinepolymer{<name>}[<default keys>]{<repeat unit>}
+\NewDocumentCommand \chemfragdefinepolymer { m O{} m }
+  {
+    \tl_gclear_new:c { g__chemfrag_poly_#1_unit_tl }
+    \tl_gset:cn { g__chemfrag_poly_#1_unit_tl } {#3}
+    \tl_gclear_new:c { g__chemfrag_poly_#1_keys_tl }
+    \tl_gset:cn { g__chemfrag_poly_#1_keys_tl } {#2}
+  }
+
+\NewDocumentCommand \chemfragpolymer { O{} m }
+  {
+    \group_begin:
+      \int_gincr:N \g__chemfrag_poly_int
+      \tl_set:Ne \l__chemfrag_poly_name_tl { \tl_to_str:n {#2} }
+      \cs_if_exist:cTF { g__chemfrag_poly_ \l__chemfrag_poly_name_tl _unit_tl }
+        {
+          \keys_set:nv { chemfrag / polymer }
+            { g__chemfrag_poly_ \l__chemfrag_poly_name_tl _keys_tl }
+          \keys_set:nn { chemfrag / polymer } {#1}
+          \__chemfrag_polymer:v
+            { g__chemfrag_poly_ \l__chemfrag_poly_name_tl _unit_tl }
+        }
+        {
+          \keys_set:nn { chemfrag / polymer } {#1}
+          \__chemfrag_polymer:n {#2}
+        }
+    \group_end:
+  }
+\tl_new:N \l__chemfrag_poly_name_tl
+\cs_generate_variant:Nn \keys_set:nn { nv }
+
+%% The open/close nodes are points on the two crossing bonds (a quarter of
+%% the bond from its outer end, leaving a short stub outside), named
+%% cfpolyo<k>/cfpolyc<k> with a counter so that several polymers can share a
+%% paragraph.
+\cs_new_protected:Npn \__chemfrag_polymer:n #1
+  {
+    \use:e
+      {
+        \exp_not:N \chemfig
+          [ \exp_not:V \l__chemfrag_poly_chemfig_tl ]
+          {
+            \tl_if_empty:NTF \l__chemfrag_poly_left_tl
+              { \exp_not:N \vphantom { \exp_not:n { CH } } }
+              { \exp_not:V \l__chemfrag_poly_left_tl }
+            - [ \c_atsign_str { cfpolyo \int_use:N \g__chemfrag_poly_int , .25 }
+                , \l__chemfrag_poly_bond_tl ]
+            \exp_not:n {#1}
+            - [ \c_atsign_str { cfpolyc \int_use:N \g__chemfrag_poly_int , .75 }
+                , \l__chemfrag_poly_bond_tl ]
+            \exp_not:V \l__chemfrag_poly_right_tl
+          }
+        \exp_not:N \polymerdelim
+          [
+            delimiters = { \exp_not:V \l__chemfrag_poly_delims_tl } ,
+            height = \l__chemfrag_poly_height_tl ,
+            depth = \l__chemfrag_poly_depth_tl ,
+            indice = { \exp_not:V \l__chemfrag_poly_n_tl }
+          ]
+          { cfpolyo \int_use:N \g__chemfrag_poly_int }
+          { cfpolyc \int_use:N \g__chemfrag_poly_int }
+      }
+  }
+\cs_generate_variant:Nn \__chemfrag_polymer:n { v }

@@ -61,7 +61,7 @@
 }
 % code above, result below (wide molecules)
 \newtcblisting{examplewide}{
-  cfbox, text above listing=false, listing above text,
+  cfbox, listing and text,
   halign lower=center, segmentation style={draw=cfrule,solid}
 }
 % code only
@@ -101,8 +101,8 @@
 \end{center}
 
 \begin{abstract}
-\pkg{chemfrag} adds building blocks to \pkg{chemfig}: rings, zigzag chains
-and functional groups. A fragment is not a picture but a \pkg{chemfig}
+\pkg{chemfrag} adds building blocks to \pkg{chemfig}: rings, zigzag chains,
+functional groups, fatty acids, peptides and polymers. A fragment is not a picture but a \pkg{chemfig}
 \emph{submolecule} that turns into ordinary \pkg{chemfig} code. You keep
 writing \cs{chemfig}\{\dots\} exactly as before and drop fragments in wherever
 they help. You can continue with hand-written \pkg{chemfig} code from any
@@ -355,6 +355,10 @@ relative, so the chain follows whatever bond leads into it.
 \key{atoms=\{\meta{k}=\meta{atom},\dots\}} & heteroatoms in the chain\\
 \key{name=\meta{prefix}} & atom names for \cs{chemmove}\\
 \key{exit=none} & no final turn (see below)\\
+\key{cis=\{\dots\}}, \key{trans=\{\dots\}} & double bonds with the given
+  geometry; \key{trans} is the same as \key{double}\\
+\key{flip=\{\dots\}} & turn the chain at these atoms (a different conformation
+  of a single bond); used to keep long chains with several cis bonds flat\\
 \bottomrule
 \end{longtable}
 
@@ -372,6 +376,185 @@ After the last atom the chain turns invisibly towards the next zig, so
 \end{example}
 \begin{example}
 \chemfig{!{benzene}-[::0]!{chain}{3}-[::0]!{OH}}
+\end{example}
+A zigzag draws every double bond trans. \key{cis} bends the chain so that
+the neighbours of the double bond sit on the same side:
+\begin{example}
+\chemfig{!{chain}{8, cis=4}}\quad
+\chemfig{!{chain}{8, trans=4}}
+\end{example}
+
+% =====================================================================
+\section{Long chains and fatty acids}
+
+\subsection{Long hydrocarbon chains}
+Any length works with \frag{chain}; the drawing simply gets longer:
+\begin{examplewide}
+\chemfig{!{chain}{20}}\par\medskip
+\chemfig{!{chain}{16, 8=CH_3, double=12}-[::0]!{OH}}
+\end{examplewide}
+
+For condensed formulas two fragments compute the formula for you.
+\frag{alkyl}\verb|{|$n$\verb|}| is $\mathrm{C}_n\mathrm{H}_{2n+1}$ (mirrored when the
+bond comes from the right, like the other condensed groups) and
+\frag{CH2n}\verb|{|$n$\verb|}| is $(\mathrm{CH}_2)_n$:
+\begin{example}
+\chemfig{H_3C-!{CH2n}{16}-COOH}\par\medskip
+\chemfig{!{alkyl}{16}-OH}\quad
+\chemfig{HO-[4]!{alkyl}{12}}
+\end{example}
+
+\subsection{Fatty acids}
+\frag{fattyacid}\verb|{|$n$\verb|, ...}| draws a carboxylic acid with $n$
+carbons, from the methyl end on the left to \texttt{COOH} on the right.
+Carbons are numbered from the carboxyl carbon (C1), as in the
+$\Delta$ notation: \verb|cis=9| is a cis double bond between C9 and C10.
+\key{cis}, \key{trans}, \key{double} and \key{flip} take these carbon
+numbers.
+\begin{examplewide}
+\chemfig{!{fattyacid}{18}}\par\medskip
+\chemfig{!{fattyacid}{18, cis=9}}
+\end{examplewide}
+Several cis bonds turn the chain each time and would roll it up.
+\key{flip} turns it back at a CH$_2$ carbon between two double bonds. Choose
+a carbon that is not the lower-numbered carbon of a double bond, or that bond
+becomes trans.
+\begin{examplewide}
+\chemfig{!{fattyacid}{20, cis={5,8,11,14}}}\qquad
+\chemfig{!{fattyacid}{20, cis={5,8,11,14}, flip={7,13}}}
+\end{examplewide}
+
+Named fatty acids are ready to use:
+
+\medskip
+\begin{center}\small
+\begin{tabular}{>{\ttfamily}l l >{\ttfamily}l l}
+\toprule
+\normalfont fragment & & \normalfont fragment & \\\midrule
+!\{lauricacid\}     & C12:0 & !\{oleicacid\}       & C18:1, cis-9\\
+!\{myristicacid\}   & C14:0 & !\{elaidicacid\}     & C18:1, trans-9\\
+!\{palmiticacid\}   & C16:0 & !\{linoleicacid\}    & C18:2, cis-9,12\\
+!\{stearicacid\}    & C18:0 & !\{linolenicacid\}   & C18:3, cis-9,12,15\\
+!\{arachidicacid\}  & C20:0 & !\{arachidonicacid\} & C20:4, cis-5,8,11,14\\
+!\{palmitoleicacid\}& C16:1, cis-9 & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{examplewide}
+\chemfig{!{linoleicacid}}\qquad
+\chemfig{!{linolenicacid}}
+\end{examplewide}
+
+% =====================================================================
+\section{Amino acids and peptides}
+
+\frag{peptide}\verb|{Gly-Ala-Ser}| draws a peptide from the N-terminus on the
+left to the C-terminus on the right. Residues are separated by hyphens and
+can be given with three-letter or one-letter codes. \frag{aminoacid}\verb|{Ala}|
+is the same with a single residue.
+\begin{examplewide}
+\chemfig{!{peptide}{Gly-Ala-Ser}}\qquad
+\chemfig{!{peptide}{Phe-Tyr-Trp-His}}
+\end{examplewide}
+
+\subsection{The amino acids}
+Side chains are written as condensed formulas, and the aromatic ones are
+drawn as rings. Proline is not available, because its side chain closes a
+ring onto the backbone nitrogen.
+
+\medskip
+\begingroup\setchemfig{atom sep=1.7em}\small
+\newcommand\aacell[2]{\begin{minipage}[b]{0.235\linewidth}\centering
+  \makebox[\linewidth]{\chemfig{!{aminoacid}{#1}}}\\[2pt]\texttt{#1}\ (\texttt{#2})\par\medskip
+  \end{minipage}\hfill}
+\noindent
+\aacell{Gly}{G}\aacell{Ala}{A}\aacell{Val}{V}\aacell{Leu}{L}
+\aacell{Ile}{I}\aacell{Ser}{S}\aacell{Thr}{T}\aacell{Cys}{C}
+\aacell{Met}{M}\aacell{Asp}{D}\aacell{Glu}{E}\aacell{Asn}{N}
+\aacell{Gln}{Q}\aacell{Lys}{K}\aacell{Arg}{R}\aacell{His}{H}
+\aacell{Phe}{F}\aacell{Tyr}{Y}\aacell{Trp}{W}\hspace*{0.235\linewidth}
+\par\endgroup
+
+\subsection{Termini and your own residues}
+The two ends come from \cs{chemfragNterm} (default \verb|H_2N|) and
+\cs{chemfragCterm} (default \verb|OH|). Redefine them, for example for the
+zwitterion:
+\begin{examplewide}
+\renewcommand\chemfragNterm{H_3\chemabove{N}{\scriptstyle+}}
+\renewcommand\chemfragCterm{O^{-}}
+\chemfig{!{peptide}{Ala-Gly}}
+\end{examplewide}
+New residues are defined with
+\cs{chemfragdefineaminoacid}\verb|{|\meta{three letters}\verb|}{|\meta{one
+letter}\verb|}{|\meta{side chain}\verb|}|:
+\begin{example}
+\chemfragdefineaminoacid{Abu}{}{CH_2CH_3}
+\chemfig{!{peptide}{Ala-Abu}}
+\end{example}
+Long peptides with bulky side chains need more room: increase
+\texttt{atom sep} with \cs{setchemfig}.
+
+% =====================================================================
+\section{Polymers}
+
+\begin{center}
+\cs{chemfragpolymer}\verb|[|\meta{keys}\verb|]{|\meta{repeat unit}\verb|}|
+\end{center}
+draws a repeat unit in brackets with \pkg{chemfig}'s \cs{polymerdelim}. The
+repeat unit is the name of a built-in polymer or any \pkg{chemfig} code. The
+brackets need two compilations.
+\begin{example}
+\chemfragpolymer{polyethylene}\par\medskip
+\chemfragpolymer{PVC}
+\end{example}
+\begin{example}
+\chemfragpolymer[n=500, delimiters=()]
+  {CH_2-CH(-[6]F)}
+\end{example}
+
+\begin{longtable}{>{\raggedright}p{0.27\linewidth} p{0.65\linewidth}}
+\toprule
+\textbf{Key} & \textbf{Meaning}\\\midrule\endhead
+\key{n=\meta{text}} & subscript after the closing bracket (default $n$)\\
+\key{delimiters=\meta{pair}} & \verb|{[]}| (default) or \verb|()|\\
+\key{height}, \key{depth} & size of the brackets above and below the main chain
+  (default 6pt; built-in polymers with substituents set larger values)\\
+\key{left}, \key{right} & end groups outside the brackets\\
+\key{bond=\meta{factor}} & length of the two bonds that cross the brackets\\
+\key{chemfig=\meta{options}} & options for this \cs{chemfig}, e.g.\
+  \verb|atom sep=2em|\\
+\bottomrule
+\end{longtable}
+
+\subsection{Built-in polymers}
+\begingroup\small
+\newcommand\poly[1]{\begin{minipage}[b]{0.48\linewidth}\centering
+  \chemfragpolymer{#1}\\[3pt]\texttt{#1}\par\bigskip
+  \end{minipage}\hfill}
+\noindent
+\poly{polyethylene}\poly{polypropylene}
+\poly{PVC}\poly{PTFE}
+\poly{PAN}\poly{PVA}
+\poly{PVAc}\poly{PMMA}
+\poly{polystyrene}\poly{polyisoprene}
+\poly{neoprene}\poly{polybutadiene}
+\poly{bunaN}\poly{bunaS}
+\poly{nylon6}\hspace*{0.5\linewidth}
+\par\endgroup
+\begin{examplewide}
+\chemfragpolymer{nylon66}\par\bigskip
+\chemfragpolymer{PET}
+\end{examplewide}
+\texttt{teflon} and \texttt{terylene} are aliases of \texttt{PTFE} and
+\texttt{PET}.
+
+\subsection{Your own polymers}
+\cs{chemfragdefinepolymer}\verb|{|\meta{name}\verb|}[|\meta{default keys}\verb|]{|\meta{repeat unit}\verb|}|
+adds a named polymer:
+\begin{example}
+\chemfragdefinepolymer{PVDF}[height=24pt, depth=24pt]
+  {CH_2-C(-[2]F)(-[6]F)}
+\chemfragpolymer{PVDF}
 \end{example}
 
 % =====================================================================
@@ -563,6 +746,10 @@ draw arrows between them with \cs{chemmove} (two compilations needed):
 % =====================================================================
 \section{Change history}
 \begin{description}[font=\sffamily\bfseries]
+  \item[1.1.0 (2026-11-25)] Long chains and biomolecules: cis/trans double
+    bonds and conformational flips in chains, fatty acids (11 named),
+    condensed \frag{alkyl} and \frag{CH2n}, amino acids and \frag{peptide},
+    polymers with \cs{chemfragpolymer} (17 named).
   \item[1.0.1 (2026-11-25)] Fewer invisible helper bonds: an exit on atom~1
     uses one bond instead of two, and a ring with \key{exit=none} has none,
     so it is identical to the hand-written ring. Drawings are unchanged.

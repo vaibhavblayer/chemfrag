@@ -1,0 +1,19 @@
+% biomolecules.tex -- long chains, fatty acids, peptides and polymers
+% (compile twice: the polymer brackets need it)
+\documentclass[border=8pt,varwidth=19cm]{standalone}
+\usepackage{chemfrag}
+\setchemfig{atom sep=1.8em}
+\begin{document}
+\chemfig{!{oleicacid}}\hfill\chemfig{!{peptide}{Phe-Tyr-Trp-His}}
+
+\medskip
+\chemfig{!{arachidonicacid}}\hfill
+\chemfig{H_3C-!{CH2n}{16}-COOH}\quad\chemfig{!{alkyl}{16}-OH}
+
+\bigskip
+\chemfragpolymer{PVC}\hfill\chemfragpolymer{polystyrene}\hfill
+\chemfragpolymer{PMMA}\hfill\chemfragpolymer{teflon}
+
+\bigskip
+\chemfragpolymer{nylon66}\hfill\chemfragpolymer{PET}
+\end{document}

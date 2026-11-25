@@ -13,15 +13,16 @@
 %% The Current Maintainer of this work is Vaibhav Blayer.
 %%
 %% This work consists of the files chemfrag.sty, chemfrag-core.code.tex,
-%% chemfrag-rings.code.tex, chemfrag-chains.code.tex,
-%% chemfrag-groups.code.tex, chemfrag-doc.tex, chemfrag-gallery.tex,
+%% chemfrag-rings.code.tex, chemfrag-chains.code.tex, chemfrag-bio.code.tex,
+%% chemfrag-polymers.code.tex, chemfrag-groups.code.tex,
+%% chemfrag-library.code.tex, chemfrag-doc.tex, chemfrag-gallery.tex,
 %% README.md and CHANGELOG.md.
 %%
 %% chemfrag does not draw anything itself.  Every fragment is a chemfig
 %% submolecule that turns into plain chemfig code, so fragments and
 %% hand-written chemfig code can be mixed freely inside \chemfig{...}.
 \NeedsTeXFormat{LaTeX2e}[2022-06-01]
-\ProvidesExplPackage{chemfrag}{2026-11-25}{1.0.1}
+\ProvidesExplPackage{chemfrag}{2026-11-25}{1.1.0}
   {Ready-made rings, chains and functional groups for chemfig}
 
 \RequirePackage{chemfig}
@@ -34,12 +35,14 @@
     \msg_error:nn { chemfrag } { old-chemfig }
   }
 
-\tl_const:Nn \c_chemfrag_version_tl { 1.0.1 }
+\tl_const:Nn \c_chemfrag_version_tl { 1.1.0 }
 \NewExpandableDocumentCommand \chemfragversion { } { \c_chemfrag_version_tl }
 
 \file_input:n { chemfrag-core.code.tex }
 \file_input:n { chemfrag-rings.code.tex }
 \file_input:n { chemfrag-chains.code.tex }
+\file_input:n { chemfrag-bio.code.tex }
+\file_input:n { chemfrag-polymers.code.tex }
 
 %% \chemfragset{<keys>}: defaults for every fragment (later calls win).
 \NewDocumentCommand \chemfragset { m }
@@ -48,4 +51,5 @@
 %% The groups are plain chemfig code: read them with document catcodes.
 \ExplSyntaxOff
 \input{chemfrag-groups.code.tex}
+\input{chemfrag-library.code.tex}
 \ExplSyntaxOn

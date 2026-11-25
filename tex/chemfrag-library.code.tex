@@ -1,0 +1,83 @@
+%% chemfrag-library.code.tex -- named biomolecules and polymers
+%%
+%% Copyright (C) 2026 Vaibhav Blayer
+%% LaTeX Project Public License 1.3c or later (see chemfrag.sty).
+%%
+%% Read with normal LaTeX catcodes: everything below is chemfig code.
+%%
+%% ---------------------------------------------------------------------------
+%% Amino acids: \chemfragdefineaminoacid{<3 letters>}{<1 letter>}{<side chain>}
+%% Side chains hang from the alpha carbon.  Parentheses that belong to a
+%% formula are braced ({(}...{)}) so that chemfig does not read a branch.
+%% Proline is missing: its side chain closes a ring onto the backbone N.
+%% ---------------------------------------------------------------------------
+\definesubmol{indol3yl}{*5(=-N(-H)-*6(-=-=-=)--)}
+\chemfragdefineaminoacid{Gly}{G}{H}
+\chemfragdefineaminoacid{Ala}{A}{CH_3}
+\chemfragdefineaminoacid{Val}{V}{CH{(}CH_3{)_2}}
+\chemfragdefineaminoacid{Leu}{L}{CH_2CH{(}CH_3{)_2}}
+\chemfragdefineaminoacid{Ile}{I}{CH{(}CH_3{)}CH_2CH_3}
+\chemfragdefineaminoacid{Ser}{S}{CH_2OH}
+\chemfragdefineaminoacid{Thr}{T}{CH{(}OH{)}CH_3}
+\chemfragdefineaminoacid{Cys}{C}{CH_2SH}
+\chemfragdefineaminoacid{Met}{M}{CH_2CH_2SCH_3}
+\chemfragdefineaminoacid{Asp}{D}{CH_2COOH}
+\chemfragdefineaminoacid{Glu}{E}{CH_2CH_2COOH}
+\chemfragdefineaminoacid{Asn}{N}{CH_2CONH_2}
+\chemfragdefineaminoacid{Gln}{Q}{CH_2CH_2CONH_2}
+\chemfragdefineaminoacid{Lys}{K}{{(}CH_2{)_4}NH_2}
+\chemfragdefineaminoacid{Arg}{R}{{(}CH_2{)_3}NHC{(}{=}NH{)}NH_2}
+\chemfragdefineaminoacid{Phe}{F}{CH_2-[::0]!{benzene*}{exit=none}}
+\chemfragdefineaminoacid{Tyr}{Y}{CH_2-[::0]!{benzene}-[::0]!{OH}}
+\chemfragdefineaminoacid{Trp}{W}{CH_2-[::0]!{indol3yl}}
+\chemfragdefineaminoacid{His}{H}{CH_2-[::0]!{imidazole*}{entry=4, exit=none}}
+%%
+%% ---------------------------------------------------------------------------
+%% Fatty acids (carbon count; Delta numbering from the carboxyl carbon).
+%% flip={...} turns the chain at CH2 carbons between double bonds so that
+%% polyunsaturated acids stay flat instead of curling up.
+%% ---------------------------------------------------------------------------
+\definesubmol{lauricacid}{!\chemfragfattyacid{12}}
+\definesubmol{myristicacid}{!\chemfragfattyacid{14}}
+\definesubmol{palmiticacid}{!\chemfragfattyacid{16}}
+\definesubmol{stearicacid}{!\chemfragfattyacid{18}}
+\definesubmol{arachidicacid}{!\chemfragfattyacid{20}}
+\definesubmol{palmitoleicacid}{!\chemfragfattyacid{16, cis=9}}
+\definesubmol{oleicacid}{!\chemfragfattyacid{18, cis=9}}
+\definesubmol{elaidicacid}{!\chemfragfattyacid{18, trans=9}}
+\definesubmol{linoleicacid}{!\chemfragfattyacid{18, cis={9,12}, flip=10}}
+\definesubmol{linolenicacid}{!\chemfragfattyacid{18, cis={9,12,15}, flip=14}}
+\definesubmol{arachidonicacid}{!\chemfragfattyacid{20, cis={5,8,11,14}, flip={7,13}}}
+%%
+%% ---------------------------------------------------------------------------
+%% Polymers: \chemfragdefinepolymer{<name>}[<default keys>]{<repeat unit>}
+%% The main chain is horizontal; substituents point up ([2]) or down ([6]).
+%% ---------------------------------------------------------------------------
+\chemfragdefinepolymer{polyethylene}{CH_2-CH_2}
+\chemfragdefinepolymer{polypropylene}[depth=26pt]{CH_2-CH(-[6]CH_3)}
+\chemfragdefinepolymer{PVC}[depth=26pt]{CH_2-CH(-[6]Cl)}
+\chemfragdefinepolymer{polystyrene}[depth=62pt]
+  {CH_2-CH(-[6]!{benzene*}{exit=none})}
+\chemfragdefinepolymer{PTFE}{CF_2-CF_2}
+\chemfragdefinepolymer{teflon}{CF_2-CF_2}
+\chemfragdefinepolymer{PAN}[depth=26pt]{CH_2-CH(-[6]CN)}
+\chemfragdefinepolymer{PVA}[depth=26pt]{CH_2-CH(-[6]OH)}
+\chemfragdefinepolymer{PVAc}[depth=26pt, bond=2.6]{CH_2-CH(-[6]OCOCH_3)}
+\chemfragdefinepolymer{PMMA}[height=26pt, depth=26pt, bond=2.6]
+  {CH_2-C(-[2]CH_3)(-[6]COOCH_3)}
+\chemfragdefinepolymer{polyisoprene}[depth=26pt]
+  {CH_2-C(-[6]CH_3)=CH-CH_2}
+\chemfragdefinepolymer{neoprene}[depth=26pt]{CH_2-C(-[6]Cl)=CH-CH_2}
+\chemfragdefinepolymer{polybutadiene}{CH_2-CH=CH-CH_2}
+\chemfragdefinepolymer{bunaS}[depth=62pt]
+  {CH_2-CH=CH-CH_2-CH_2-CH(-[6]!{benzene*}{exit=none})}
+\chemfragdefinepolymer{bunaN}[depth=26pt]
+  {CH_2-CH=CH-CH_2-CH_2-CH(-[6]CN)}
+\chemfragdefinepolymer{nylon6}[height=26pt]
+  {N(-[2]H)-{(}CH_2{)_5}-C(=[2]O)}
+\chemfragdefinepolymer{nylon66}[height=26pt]
+  {N(-[2]H)-{(}CH_2{)_6}-N(-[2]H)-C(=[2]O)-{(}CH_2{)_4}-C(=[2]O)}
+\chemfragdefinepolymer{PET}[height=26pt]
+  {O-CH_2-CH_2-O-C(=[2]O)-!{benzene}-[::0]C(=[2]O)}
+\chemfragdefinepolymer{terylene}[height=26pt]
+  {O-CH_2-CH_2-O-C(=[2]O)-!{benzene}-[::0]C(=[2]O)}

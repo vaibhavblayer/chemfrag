@@ -1,6 +1,6 @@
 # chemfrag — ready-made rings, chains and functional groups for chemfig
 
-Version 1.0.1 (2026-11-25)
+Version 1.1.0 (2026-11-25)
 
 `chemfrag` adds building blocks to [chemfig](https://ctan.org/pkg/chemfig):
 rings, zigzag chains and functional groups. A fragment is not a picture but a
@@ -20,6 +20,8 @@ any hand-written structure.
 
 ![chemfrag examples](examples/showcase.png)
 
+![biomolecules and polymers](examples/biomolecules.png)
+
 ## Features
 
 - **27 rings** (`benzene`, `cyclohexane`, `pyridine`, `furan`, `pyrrole`,
@@ -27,7 +29,15 @@ any hand-written structure.
   Options: substituents by position, exit atom, entry numbering, clockwise
   numbering, aromatic circle, heteroatoms, bond patterns, atom names for
   `\chemmove`.
-- **Chains**: `!{chain}{5, 2=CH_3, double=3}`, zigzag in any direction.
+- **Chains**: `!{chain}{5, 2=CH_3, double=3}`, zigzag in any direction, with
+  `cis`/`trans` double bonds; condensed `!{alkyl}{16}` (C₁₆H₃₃) and
+  `!{CH2n}{14}` ((CH₂)₁₄).
+- **Fatty acids**: `!{fattyacid}{18, cis=9}` plus 11 named acids
+  (`!{stearicacid}`, `!{oleicacid}`, `!{arachidonicacid}`, …).
+- **Amino acids and peptides**: `!{peptide}{Phe-Tyr-Trp-His}` with 19 amino
+  acids (three- or one-letter codes) and your own residues.
+- **Polymers**: `\chemfragpolymer{PVC}`, `{nylon66}`, `{PET}`, … (17 built in)
+  or any repeat unit, in brackets with a subscript.
 - **Functional groups**: condensed (`!{OH}` reads `HO` when it sits on the left)
   and skeletal (`!{carboxyl}`, `!{ester}`, `!{amide}`, `!{nitro}`, …).
 - `\chemfragset{...}` for defaults, `\chemfragdefinering{...}` for your own

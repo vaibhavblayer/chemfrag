@@ -1,0 +1,217 @@
+%% chemfrag-bio.code.tex -- long chains and biomolecules for chemfrag
+%%
+%% Copyright (C) 2026 Vaibhav Blayer
+%% LaTeX Project Public License 1.3c or later (see chemfrag.sty).
+%%
+%% Everything here is built on the chain engine (chemfrag-chains.code.tex):
+%% a fatty acid or a peptide is a zigzag chain with heteroatoms and
+%% substituents at computed positions.  The macros only *write the keys* for
+%% the chain engine, so they are expandable as well.
+
+%% An explicit subscript character "_" (catcode 8): chemfig looks at the
+%% character codes of atoms, so the implicit \c_math_subscript_token will not do.
+\cs_new:Npn \__chemfrag_sub: { \char_generate:nn { 95 } { 8 } }
+
+%% ===========================================================================
+%% Condensed long chains
+%% ===========================================================================
+%% !{alkyl}{16}  ->  C_{16}H_{33}   (H_{33}C_{16} when the bond comes from
+%%                                   the right, like the condensed groups)
+%% !{CH2n}{14}   ->  (CH_2)_{14}
+%% The direction test is the one chemfig uses for its own two-sided
+%% submolecules (angle strictly between 90 and 270 degrees).
+\cs_new:Npn \chemfragalkyl #1
+  { \exp:w \exp_after:wN \exp_end: \expanded { \__chemfrag_alkyl:n {#1} } }
+\cs_new:Npn \__chemfrag_alkyl:n #1
+  {
+    \__chemfrag_if_from_right:TF
+      {
+        H \__chemfrag_sub: { \int_eval:n { 2 * (#1) + 1 } }
+        C \__chemfrag_sub: { \int_eval:n {#1} }
+      }
+      {
+        C \__chemfrag_sub: { \int_eval:n {#1} }
+        H \__chemfrag_sub: { \int_eval:n { 2 * (#1) + 1 } }
+      }
+  }
+\cs_new:Npn \chemfragmethylenes #1
+  {
+    \exp:w \exp_after:wN \exp_end: \expanded
+      {
+        % chemfig needs the parentheses in braces, or they open a branch
+        { ( } CH \__chemfrag_sub: 2
+        { ) \__chemfrag_sub: { \int_eval:n {#1} } }
+      }
+  }
+\prg_new_conditional:Npnn \__chemfrag_if_from_right: { TF }
+  {
+    \cs_if_exist:NTF \CF_currentangle
+      {
+        \fp_compare:nNnTF { \CF_currentangle } > { 90 }
+          {
+            \fp_compare:nNnTF { \CF_currentangle } < { 270 }
+              { \prg_return_true: } { \prg_return_false: }
+          }
+          { \prg_return_false: }
+      }
+      { \prg_return_false: }
+  }
+\__chemfrag_submol_arg:nn { alkyl } { !\chemfragalkyl }
+\__chemfrag_submol_arg:nn { CH2n } { !\chemfragmethylenes }
+
+%% ===========================================================================
+%% Fatty acids
+%% ===========================================================================
+%% \chemfragfattyacid{<n>, cis={...}, trans={...}, <other chain keys>}
+%% <n> carbons numbered from the carboxyl carbon (C1), drawn from the methyl
+%% end on the left to COOH on the right.  A double bond "Delta k" joins
+%% C<k> and C<k+1>.  Carbon c sits at chain position n+1-c, so Delta k is
+%% chain bond n-k; position n+1 is the OH of the acid.
+\cs_new:Npn \chemfragfattyacid #1
+  {
+    \exp:w \exp_after:wN \exp_end: \expanded
+      { \__chemfrag_fatty:Vn \l__chemfrag_defaults_tl {#1} }
+  }
+\cs_new:Npn \__chemfrag_fatty:nn #1#2
+  {
+    \exp_args:Ne \__chemfrag_fatty_a:nn
+      { \__chemfrag_chain_length:n { #2 , #1 } } { #2 , #1 }
+  }
+\cs_generate_variant:Nn \__chemfrag_fatty:nn { V }
+%%   #1 = number of carbons, #2 = keys
+\cs_new:Npn \__chemfrag_fatty_a:nn #1#2
+  {
+    \exp_args:Ne \__chemfrag_chain_main:n
+      {
+        n = \int_eval:n { #1 + 1 } ,
+        \int_eval:n {#1} = { = O } ,
+        atoms = { \int_eval:n { #1 + 1 } = OH } ,
+        cis =
+          { \exp_args:Ne \__chemfrag_fatty_bonds:nn { \__chemfrag_get:nnn {#2} { cis } { } } {#1} } ,
+        trans =
+          { \exp_args:Ne \__chemfrag_fatty_bonds:nn { \__chemfrag_get:nnn {#2} { trans } { } } {#1} } ,
+        double =
+          { \exp_args:Ne \__chemfrag_fatty_bonds:nn { \__chemfrag_get:nnn {#2} { double } { } } {#1} } ,
+        flip =
+          { \exp_args:Ne \__chemfrag_fatty_atoms:nn { \__chemfrag_get:nnn {#2} { flip } { } } {#1} } ,
+        exit = none ,
+        \exp_not:n {#2}
+      }
+  }
+%% {9,12} with n = 18  ->  9,6,
+\cs_new:Npn \__chemfrag_fatty_bonds:nn #1#2
+  {
+    \expanded
+      {
+        \keyval_parse:nnn
+          { \__chemfrag_fatty_bond:nn {#2} }
+          { \use_none:nnn {#2} }
+          {#1}
+      }
+  }
+\cs_new:Npn \__chemfrag_fatty_bond:nn #1#2
+  { \int_eval:n { (#1) - (#2) } , }
+%% carbon c -> chain position n+1-c   (for flip={...})
+\cs_new:Npn \__chemfrag_fatty_atoms:nn #1#2
+  {
+    \expanded
+      {
+        \keyval_parse:nnn
+          { \__chemfrag_fatty_atom:nn {#2} }
+          { \use_none:nnn {#2} }
+          {#1}
+      }
+  }
+\cs_new:Npn \__chemfrag_fatty_atom:nn #1#2
+  { \int_eval:n { (#1) + 1 - (#2) } , }
+
+\__chemfrag_submol_arg:nn { fattyacid } { !\chemfragfattyacid }
+
+%% ===========================================================================
+%% Amino acids and peptides
+%% ===========================================================================
+%% \chemfragdefineaminoacid{<three-letter code>}{<one-letter code>}{<side chain>}
+%% The side chain is chemfig code that hangs from the alpha carbon.
+\cs_new_protected:Npn \chemfrag_define_amino_acid:nnn #1#2#3
+  {
+    \tl_gclear_new:c { g__chemfrag_aa_#1_tl }
+    \tl_gset:cn { g__chemfrag_aa_#1_tl } {#3}
+    \tl_if_blank:nF {#2}
+      {
+        \tl_gclear_new:c { g__chemfrag_aa_#2_tl }
+        \tl_gset:cn { g__chemfrag_aa_#2_tl } {#3}
+      }
+  }
+\NewDocumentCommand \chemfragdefineaminoacid { m m m }
+  { \chemfrag_define_amino_acid:nnn {#1} {#2} {#3} }
+
+%% End groups of a peptide; redefine them for zwitterions etc.
+\cs_new:Npn \chemfragNterm { H \__chemfrag_sub: 2 N }
+\cs_new:Npn \chemfragCterm { OH }
+
+\msg_new:nnn { chemfrag } { unknown-amino-acid }
+  { Unknown~amino~acid~`#1'. }
+
+%% \chemfragpeptide{Gly-Ala-Ser}
+%% A peptide of k residues is a chain of 3k+1 atoms:
+%%   N_i = 3i-2,  C(alpha)_i = 3i-1 (side chain),  C_i = 3i (=O),  OH = 3k+1
+\cs_new:Npn \chemfragpeptide #1
+  {
+    \exp:w \exp_after:wN \exp_end: \expanded
+      { \exp_args:Ne \__chemfrag_peptide:n { \__chemfrag_peptide_split:n {#1} } }
+  }
+%% "Gly-Ala-Ser" -> {Gly}{Ala}{Ser}
+\cs_new:Npn \__chemfrag_peptide_split:n #1
+  { \__chemfrag_peptide_split:w #1 - \q_recursion_tail - \q_recursion_stop }
+\cs_new:Npn \__chemfrag_peptide_split:w #1 -
+  {
+    \quark_if_recursion_tail_stop:n {#1}
+    { \tl_trim_spaces:n {#1} }
+    \__chemfrag_peptide_split:w
+  }
+\cs_new:Npn \__chemfrag_peptide:n #1
+  {
+    \exp_args:Ne \__chemfrag_peptide_b:n
+      {
+        n = \int_eval:n { 3 * \tl_count:n {#1} + 1 } ,
+        atoms =
+          {
+            1 = \exp_not:o { \chemfragNterm } ,
+            \__chemfrag_peptide_atoms:nn { 2 } { \tl_count:n {#1} }
+            \int_eval:n { 3 * \tl_count:n {#1} + 1 } = \exp_not:o { \chemfragCterm }
+          } ,
+        \__chemfrag_peptide_keys:nn { 1 } {#1}
+        exit = none
+      }
+  }
+\cs_new:Npn \__chemfrag_peptide_b:n #1
+  { \__chemfrag_chain:Vn \l__chemfrag_defaults_tl {#1} }
+\cs_new:Npn \__chemfrag_peptide_atoms:nn #1#2
+  {
+    \int_compare:nNnF {#1} > {#2}
+      {
+        \int_eval:n { 3 * #1 - 2 } = N ,
+        \exp_args:Ne \__chemfrag_peptide_atoms:nn { \int_eval:n { #1 + 1 } } {#2}
+      }
+  }
+%%   #1 = i, #2 = list of residues
+\cs_new:Npn \__chemfrag_peptide_keys:nn #1#2
+  {
+    \int_compare:nNnF {#1} > { \tl_count:n {#2} }
+      {
+        \int_compare:nNnT {#1} > { 1 } { \int_eval:n { 3 * #1 - 2 } = H , }
+        \int_eval:n { 3 * #1 - 1 } =
+          { \exp_args:Ne \__chemfrag_residue:n { \tl_item:nn {#2} {#1} } } ,
+        \int_eval:n { 3 * #1 } = { = O } ,
+        \exp_args:Ne \__chemfrag_peptide_keys:nn { \int_eval:n { #1 + 1 } } {#2}
+      }
+  }
+\cs_new:Npn \__chemfrag_residue:n #1
+  {
+    \cs_if_exist:cTF { g__chemfrag_aa_#1_tl }
+      { \exp_not:v { g__chemfrag_aa_#1_tl } }
+      { \msg_expandable_error:nnn { chemfrag } { unknown-amino-acid } {#1} }
+  }
+
+\__chemfrag_submol_arg:nn { peptide } { !\chemfragpeptide }
+\__chemfrag_submol_arg:nn { aminoacid } { !\chemfragpeptide }

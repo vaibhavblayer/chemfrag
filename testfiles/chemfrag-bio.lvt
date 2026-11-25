@@ -1,0 +1,32 @@
+% Regression test: long chains, fatty acids, peptides (generated code).
+\input{regression-test}
+\documentclass{article}
+\usepackage{chemfrag}
+\ExplSyntaxOn
+\cs_new_protected:Npn \testcode #1
+  {
+    \tl_set:Ne \l_tmpa_tl {#1}
+    \TYPE { \tl_to_str:N \l_tmpa_tl }
+  }
+\ExplSyntaxOff
+\begin{document}
+\START
+\TEST{cis, trans and flips in chains}{%
+  \testcode{\chemfragchain{6, cis=3}}%
+  \testcode{\chemfragchain{6, trans=3}}%
+  \testcode{\chemfragchain{6, flip=3, exit=none}}%
+}
+\TEST{fatty acids}{%
+  \testcode{\chemfragfattyacid{6}}%
+  \testcode{\chemfragfattyacid{8, cis=3}}%
+}
+\TEST{condensed chains}{%
+  \testcode{\chemfragalkyl{16}}%
+  \testcode{\chemfragmethylenes{14}}%
+}
+\TEST{peptides}{%
+  \testcode{\chemfragpeptide{Gly}}%
+  \testcode{\chemfragpeptide{Gly-Ala-Ser}}%
+  \testcode{\chemfragpeptide{G-A}}%
+}
+\END

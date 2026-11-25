@@ -20,6 +20,14 @@
 %%   Cn                  : [::-60s(-1)^n] (continues the zigzag)
 %% At the end a tiny invisible bond turns towards the next zig, so
 %% "-[::0]" continues the zigzag naturally.
+%%
+%% cis double bonds.  A plain zigzag makes every double bond trans.  For a cis
+%% double bond j (atoms j and j+1) the turn at atom j+1 must have the same
+%% sign as the turn at atom j, so every turn after it is mirrored.  With
+%%   sigma(k) = s * (-1)^(number of cis bonds j <= k-1)
+%% all the formulas above use sigma(k) instead of s for the turn at atom k.
+%% "flip={v,...}" adds the same mirror at atom v without a double bond, to
+%% straighten long chains with several cis bonds.
 %% ---------------------------------------------------------------------------
 
 \cs_new:Npn \chemfragchain #1
@@ -77,7 +85,13 @@
     \exp_args:Ne \str_if_eq:nnF { \__chemfrag_get:nnn {#4} { exit } { end } } { none }
       {
         \__chemfrag_jump:nn
-          { \int_eval:n { -60 * (#2) * \int_if_odd:nTF {#1} { -1 } { 1 } } }
+          {
+            \int_eval:n
+              {
+                -60 * \__chemfrag_chain_sigma:nnn {#4} {#2} {#1}
+                * \int_if_odd:nTF {#1} { -1 } { 1 }
+              }
+          }
           { 0.01 }
         \__chemfrag_phantom:nn {#4} {#1}
       }
@@ -94,7 +108,13 @@
           {
             \int_compare:nNnTF {#1} = { 2 }
               { \int_eval:n { 30 * (#3) } }
-              { \int_eval:n { 60 * (#3) * \int_if_odd:nTF {#1} { -1 } { 1 } } }
+              {
+                \int_eval:n
+                  {
+                    60 * \__chemfrag_chain_sigma:nnn {#4} {#3} { #1 - 1 }
+                    * \int_if_odd:nTF {#1} { -1 } { 1 }
+                  }
+              }
           }
           { } { }
         % atom k
@@ -103,21 +123,53 @@
         \__chemfrag_branch:nnn {#4} {#1}
           {
             \int_compare:nNnTF {#1} = {#2}
-              { \int_eval:n { -60 * (#3) * \int_if_odd:nTF {#2} { -1 } { 1 } } }
-              { \int_eval:n {  60 * (#3) * \int_if_odd:nTF {#1} { -1 } { 1 } } }
+              {
+                \int_eval:n
+                  {
+                    -60 * \__chemfrag_chain_sigma:nnn {#4} {#3} {#2}
+                    * \int_if_odd:nTF {#2} { -1 } { 1 }
+                  }
+              }
+              {
+                \int_eval:n
+                  {
+                    60 * \__chemfrag_chain_sigma:nnn {#4} {#3} {#1}
+                    * \int_if_odd:nTF {#1} { -1 } { 1 }
+                  }
+              }
           }
         \exp_args:Ne \__chemfrag_chain_loop:nnnn
           { \int_eval:n { #1 + 1 } } {#2} {#3} {#4}
       }
   }
 
-%% Bond j:  double={...}  triple={...}  bonds={<pattern>}  (single otherwise)
+%% sigma(k) of the header:  #1 = keys, #2 = s, #3 = k (integer expression)
+%% A "flip" at atom v (a conformational turn at a single bond) mirrors the
+%% turns from atom v on, so the turn at v repeats the turn before it.
+\cs_new:Npn \__chemfrag_chain_sigma:nnn #1#2#3
+  {
+    ( #2 ) *
+    \int_if_odd:nTF
+      {
+        \__chemfrag_count_upto:nnn {#1} { cis } { \int_eval:n { #3 - 1 } }
+        + \__chemfrag_count_upto:nnn {#1} { flip } { \int_eval:n {#3} }
+      }
+      { -1 } { 1 }
+  }
+
+%% Bond j:  double={...}  cis={...}  trans={...}  triple={...}
+%%          bonds={<pattern>}  (single otherwise)
 \cs_new:Npn \__chemfrag_chain_bond_char:nn #1#2
   {
     \__chemfrag_if_listed:nnnTF {#1} { triple } {#2}
       { \c_tilde_str }
       {
-        \__chemfrag_if_listed:nnnTF {#1} { double } {#2}
+        \bool_lazy_any:nTF
+          {
+            { \__chemfrag_if_listed_p:nnn {#1} { double } {#2} }
+            { \__chemfrag_if_listed_p:nnn {#1} { cis } {#2} }
+            { \__chemfrag_if_listed_p:nnn {#1} { trans } {#2} }
+          }
           { = }
           {
             \exp_args:Ne \__chemfrag_bond_char:nn

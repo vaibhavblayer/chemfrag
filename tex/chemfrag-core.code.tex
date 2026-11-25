@@ -118,7 +118,7 @@
 
 %% Is the current key list member "<n>" present in the list stored under
 %% <key>?  Used for  double={2,4}  and friends.
-\prg_new_conditional:Npnn \__chemfrag_if_listed:nnn #1#2#3 { T , F , TF }
+\prg_new_conditional:Npnn \__chemfrag_if_listed:nnn #1#2#3 { p , T , F , TF }
   {
     \exp_args:Ne \tl_if_empty:nTF
       {
@@ -127,6 +127,33 @@
       }
       { \prg_return_false: } { \prg_return_true: }
   }
+
+%% How many integers in the list stored under <key> are <= <m>?
+%%   \__chemfrag_count_upto:nnn {<keys>} {<key>} {<m>}  -> integer
+\cs_new:Npn \__chemfrag_count_upto:nnn #1#2#3
+  {
+    \int_eval:n
+      {
+        0
+        \exp_args:Ne \use:n
+          {
+            \exp_args:Ne \__chemfrag_count_list:nn
+              { \__chemfrag_get:nnn {#1} {#2} { } } {#3}
+          }
+      }
+  }
+\cs_new:Npn \__chemfrag_count_list:nn #1#2
+  {
+    \expanded
+      {
+        \keyval_parse:nnn
+          { \__chemfrag_count_item:nn {#2} }
+          { \use_none:nnn {#2} }
+          {#1}
+      }
+  }
+\cs_new:Npn \__chemfrag_count_item:nn #1#2
+  { \int_compare:nNnT {#2} < { #1 + 1 } { + 1 } }
 
 %% ===========================================================================
 %% 2. Context coming from chemfig

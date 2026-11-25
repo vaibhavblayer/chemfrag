@@ -16,6 +16,11 @@
   \chemfig{!{piperidine*}{1=, exit=1}-[::0]!{acetyl}}%
   \chemfig{!{naphthalene}}%
   \chemfig{!{ring*}{size=7, bonds={=-=-=--}, 3=Br}}%
+  \chemfig{!{oleicacid}}\chemfig{!{arachidonicacid}}%
+  \chemfig{!{peptide}{Phe-Tyr-Trp-His}}%
+  \chemfig{H_3C-!{CH2n}{16}-COOH}\chemfig{!{alkyl}{16}-OH}%
+  \chemfragpolymer{PVC}\chemfragpolymer{nylon66}\chemfragpolymer{PET}%
+  \chemfragpolymer[n=500, delimiters=()]{CH_2-CH(-[6]F)}%
 }
 \TYPE{width>0: \ifdim\wd\testbox>0pt yes\else no\fi}
 \END
