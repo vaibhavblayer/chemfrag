@@ -1,0 +1,239 @@
+%% chemfrag-core.code.tex -- expandable engine of the chemfrag package
+%%
+%% Copyright (C) 2026 Vaibhav Blayer
+%%
+%% This work may be distributed and/or modified under the conditions of the
+%% LaTeX Project Public License, either version 1.3c of this license or (at
+%% your option) any later version. The latest version of this license is in
+%%   https://www.latex-project.org/lppl.txt
+%%
+%% This work has the LPPL maintenance status `maintained'.
+%% The Current Maintainer of this work is Vaibhav Blayer.
+%%
+%% ---------------------------------------------------------------------------
+%% How it works
+%% ---------------------------------------------------------------------------
+%% chemfig expands a submolecule "!{name}" (or "!\macro") twice when it reads
+%% it.  Every chemfrag fragment is a submolecule whose code is
+%%      !\chemfragring{<ring>}{<keys>}   or   !\chemfragchain{<keys>}
+%% Those two macros are *fully expandable*: their second expansion step
+%% (\exp:w = \romannumeral) runs the whole engine below inside one \expanded
+%% and leaves nothing but plain chemfig code.  chemfig then parses that code
+%% as if the user had typed it, so fragments and hand-written chemfig mix
+%% freely.
+%%
+%% Two rules follow from that design:
+%%   * everything in this file is expandable;
+%%   * chemfig reads its syntax characters ( [ ] : , - = ~ ( ) * @ ) with
+%%     catcode 12, so every piece of syntax we emit is produced with
+%%     \tl_to_str:n or a \c_..._str constant; user material (atoms,
+%%     substituents) is passed through untouched with \exp_not:n.
+%% ---------------------------------------------------------------------------
+
+%% Defaults set with \chemfragset (searched after the user's keys).
+\tl_new:N \l__chemfrag_defaults_tl
+
+%% ===========================================================================
+%% 1. Key lookup (expandable)
+%% ===========================================================================
+%% Key lists are ordinary "key=value" lists.  The first occurrence of a key
+%% wins, so a fragment searches  <user keys> , <\chemfragset keys> , <data>.
+%%
+%% \__chemfrag_kv_all:nn {<list>} {<key>} leaves {<v1>}{<v2>}... for every
+%% occurrence.  \keyval_parse:nnn wraps its result in \exp_not:n, so the
+%% inner \expanded only *returns* the calls; they run in the surrounding
+%% e-expansion.  This function must therefore always be used inside an
+%% e-type expansion (\exp_args:Ne, \expanded, ...).
+\cs_new:Npn \__chemfrag_kv_all:nn #1#2
+  {
+    \expanded
+      {
+        \keyval_parse:nnn
+          { \__chemfrag_kv_flag:nn {#2} }
+          { \__chemfrag_kv_pair:nnn {#2} }
+          {#1}
+      }
+  }
+\cs_new:Npn \__chemfrag_kv_flag:nn #1#2
+  { \str_if_eq:nnT {#1} {#2} { { true } } }
+\cs_new:Npn \__chemfrag_kv_pair:nnn #1#2#3
+  { \str_if_eq:nnT {#1} {#2} { \exp_not:n { {#3} } } }
+
+%% \__chemfrag_get:nnn {<list>} {<key>} {<default>}
+%% Value of the first occurrence of <key>, protected against further
+%% expansion; <default> when the key is absent.
+\cs_new:Npn \__chemfrag_get:nnn #1#2#3
+  { \exp_args:Ne \__chemfrag_get_aux:nn { \__chemfrag_kv_all:nn {#1} {#2} } {#3} }
+\cs_new:Npn \__chemfrag_get_aux:nn #1#2
+  {
+    \tl_if_empty:nTF {#1}
+      { \exp_not:n {#2} }
+      { \exp_not:o { \use_i_delimit_by_q_stop:nw #1 \q_stop } }
+  }
+
+%% Same, but only "key=value" entries count (a bare "5" in !{chain}{5}
+%% is the length, not a substituent on atom 5).
+\cs_new:Npn \__chemfrag_kv_pairs:nn #1#2
+  {
+    \expanded
+      {
+        \keyval_parse:nnn
+          { \use_none:n }
+          { \__chemfrag_kv_pair:nnn {#2} }
+          {#1}
+      }
+  }
+\cs_new:Npn \__chemfrag_value:nnn #1#2#3
+  { \exp_args:Ne \__chemfrag_get_aux:nn { \__chemfrag_kv_pairs:nn {#1} {#2} } {#3} }
+
+%% Integer value of a key.
+\cs_new:Npn \__chemfrag_int:nnn #1#2#3
+  { \int_eval:n { \exp_args:Ne \use:n { \__chemfrag_get:nnn {#1} {#2} {#3} } } }
+
+%% A flag is "on" when present with no value, or with any value but false.
+\prg_new_conditional:Npnn \__chemfrag_if_on:nn #1#2 { T , F , TF }
+  {
+    \exp_args:Ne \str_if_eq:nnTF
+      { \__chemfrag_get:nnn {#1} {#2} { false } } { false }
+      { \prg_return_false: } { \prg_return_true: }
+  }
+
+%% Is <key> a bare integer (as in "!{chain}{5}")?  Leaves {<int>} if so.
+\cs_new:Npn \__chemfrag_bare_int:n #1
+  {
+    \expanded
+      { \keyval_parse:nnn { \__chemfrag_bare_int_aux:n } { \use_none:nn } {#1} }
+  }
+\cs_new:Npn \__chemfrag_bare_int_aux:n #1
+  {
+    \str_if_eq:eeT {#1}
+      { \str_map_function:nN {#1} \__chemfrag_keep_digit:N }
+      { {#1} }
+  }
+\cs_new:Npn \__chemfrag_keep_digit:N #1
+  {
+    \int_compare:nNnT { `#1 } > { 47 }
+      { \int_compare:nNnT { `#1 } < { 58 } {#1} }
+  }
+
+%% Is the current key list member "<n>" present in the list stored under
+%% <key>?  Used for  double={2,4}  and friends.
+\prg_new_conditional:Npnn \__chemfrag_if_listed:nnn #1#2#3 { T , F , TF }
+  {
+    \exp_args:Ne \tl_if_empty:nTF
+      {
+        \exp_args:Ne \__chemfrag_kv_all:nn
+          { \__chemfrag_get:nnn {#1} {#2} { } } {#3}
+      }
+      { \prg_return_false: } { \prg_return_true: }
+  }
+
+%% ===========================================================================
+%% 2. Context coming from chemfig
+%% ===========================================================================
+%% A fragment that starts a molecule has no incoming bond.  chemfig keeps
+%% track of what it did last in \CF_lastaction (0 = nothing yet).  If a
+%% future chemfig drops that macro we simply assume an incoming bond.
+\prg_new_conditional:Npnn \__chemfrag_if_standalone: { T , F , TF }
+  {
+    \cs_if_exist:NTF \CF_lastaction
+      {
+        \int_compare:nNnTF { \CF_lastaction } = { 0 }
+          { \prg_return_true: } { \prg_return_false: }
+      }
+      { \prg_return_false: }
+  }
+
+%% ===========================================================================
+%% 3. Emitting chemfig syntax
+%% ===========================================================================
+\cs_new:Npn \__chemfrag_hidden: { \exp_not:n { draw=none } }
+
+%% \__chemfrag_bond:nnnn {<bond char>} {<relative angle>} {<length>} {<tikz>}
+\cs_new:Npn \__chemfrag_bond:nnnn #1#2#3#4
+  {
+    #1 [ \c_colon_str \c_colon_str #2
+    \tl_if_blank:nF { #3 #4 } { , #3 , , , #4 }
+    ]
+  }
+
+%% Invisible bond, used to move to the centre of a ring and back out.
+\cs_new:Npn \__chemfrag_jump:nn #1#2
+  { \__chemfrag_bond:nnnn { - } {#1} {#2} { \__chemfrag_hidden: } }
+
+%% Atom name for \chemmove:  @{<prefix><n>}
+\cs_new:Npn \__chemfrag_name:nn #1#2
+  { \exp_args:Ne \__chemfrag_name_aux:nn { \__chemfrag_get:nnn {#1} { name } { } } {#2} }
+\cs_new:Npn \__chemfrag_name_aux:nn #1#2
+  { \tl_if_blank:nF {#1} { \c_atsign_str { \exp_not:n {#1} #2 } } }
+
+%% Content of atom <n>:  atoms={<n>=<content>, ...}
+\cs_new:Npn \__chemfrag_atom:nn #1#2
+  { \exp_args:Ne \__chemfrag_value:nnn { \__chemfrag_value:nnn {#1} { atoms } { } } {#2} { } }
+
+%% Invisible copy of atom <n>, so that a bond leaving a heteroatom after an
+%% exit jump starts at the edge of the letter, not at its centre.
+\cs_new:Npn \__chemfrag_phantom:nn #1#2
+  { \exp_args:Ne \__chemfrag_phantom_aux:n { \__chemfrag_atom:nn {#1} {#2} } }
+\cs_new:Npn \__chemfrag_phantom_aux:n #1
+  { \tl_if_blank:nF {#1} { \exp_not:N \chemfragphantom { \exp_not:n {#1} } } }
+%% Protected, so the generated code survives any further full expansion.
+\cs_new_protected:Npn \chemfragphantom #1 { \phantom {#1} }
+
+%% Substituent on atom <n>, as a chemfig branch "( ... )".
+%%   #1 = key list, #2 = atom number, #3 = relative angle (empty = let chemfig
+%%   choose, as it does inside rings).
+\cs_new:Npn \__chemfrag_branch:nnn #1#2#3
+  { \exp_args:Ne \__chemfrag_branch_aux:nn { \__chemfrag_value:nnn {#1} {#2} { } } {#3} }
+\cs_new:Npn \__chemfrag_branch_aux:nn #1#2
+  { \tl_if_blank:nF {#1} { ( \__chemfrag_substituent:nn {#1} {#2} ) } }
+
+%% A substituent may start with its own bond ("=O", "~N", "<:OH",
+%% "-[::30]R").  Otherwise a single bond is added.  When an angle is
+%% requested and the user did not give one, it is inserted after the bond.
+\cs_new:Npn \__chemfrag_substituent:nn #1#2
+  {
+    \exp_args:Ne \__chemfrag_substituent_aux:nnn
+      { \str_head:n {#1} } {#1} {#2}
+  }
+\cs_new:Npn \__chemfrag_substituent_aux:nnn #1#2#3
+  {
+    \__chemfrag_if_bond_char:nTF {#1}
+      {
+        \exp_args:Ne \str_if_eq:nnTF
+          { \exp_args:Ne \str_head:n { \tl_tail:n {#2} } } { [ }
+          { \exp_not:n {#2} }
+          {
+            \tl_to_str:n {#1}
+            \tl_if_blank:nF {#3} { [ \c_colon_str \c_colon_str #3 ] }
+            \tl_tail:n {#2}
+          }
+      }
+      {
+        -
+        \tl_if_blank:nF {#3} { [ \c_colon_str \c_colon_str #3 ] }
+        \exp_not:n {#2}
+      }
+  }
+\prg_new_conditional:Npnn \__chemfrag_if_bond_char:n #1 { TF }
+  {
+    \bool_lazy_any:nTF
+      {
+        { \str_if_eq_p:nn {#1} { - } }
+        { \str_if_eq_p:nn {#1} { = } }
+        { \str_if_eq_p:ee {#1} { \c_tilde_str } }
+        { \str_if_eq_p:nn {#1} { < } }
+        { \str_if_eq_p:nn {#1} { > } }
+      }
+      { \prg_return_true: } { \prg_return_false: }
+  }
+
+%% Bond character <n> of a pattern such as "=-=-=-" ("-" when missing).
+\cs_new:Npn \__chemfrag_bond_char:nn #1#2
+  { \exp_args:Ne \__chemfrag_bond_char_aux:n { \tl_item:nn {#1} {#2} } }
+\cs_new:Npn \__chemfrag_bond_char_aux:n #1
+  { \tl_if_blank:nTF {#1} { - } { \tl_to_str:n {#1} } }
+
+%% Expandable error for unknown fragments.
+\msg_new:nnn { chemfrag } { unknown-ring }
+  { Unknown~ring~`#1'.~Define~it~with~\iow_char:N\\chemfragdefinering. }

@@ -1,0 +1,14 @@
+# l3build
+build/
+*.zip
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.listing
+# macOS
+.DS_Store

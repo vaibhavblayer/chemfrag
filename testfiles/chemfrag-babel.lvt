@@ -1,0 +1,16 @@
+% babel-french makes ! : ; ? active; fragments must still work.
+\input{regression-test}
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{chemfrag}
+\begin{document}
+\START
+\newbox\testbox
+\setbox\testbox\hbox{%
+  \chemfig{!{benzene*}{2=NO_2}-[::0]!{OH}}%
+  \textbf{\chemfig{!{benzene}-[::0]!{OH}}}%
+  \chemfig{!{chain}{4}}%
+}
+\TYPE{width>0: \ifdim\wd\testbox>0pt yes\else no\fi}
+\END

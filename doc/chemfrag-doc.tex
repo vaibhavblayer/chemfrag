@@ -1,0 +1,563 @@
+% chemfrag-doc.tex -- user manual of the chemfrag package
+% Copyright (C) 2026 Vaibhav Blayer -- LPPL 1.3c or later
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.4cm,headheight=14pt]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{chemfrag}
+\usepackage{booktabs,array,longtable}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------- colours
+\definecolor{cfaccent}{HTML}{1F6F8B}
+\definecolor{cfback}{HTML}{F4F8FA}
+\definecolor{cfrule}{HTML}{C9DCE3}
+\definecolor{cfcode}{HTML}{8A3B12}
+\definecolor{cfgray}{HTML}{6B7780}
+\hypersetup{colorlinks,linkcolor=cfaccent,urlcolor=cfaccent,citecolor=cfaccent}
+
+% ---------------------------------------------------------------- layout
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{cfgray}\textsf{chemfrag} v\chemfragversion}
+\fancyhead[R]{\small\color{cfgray}\nouppercase{\leftmark}}
+\fancyfoot[C]{\small\color{cfgray}\thepage}
+\renewcommand\headrulewidth{0pt}
+\setlength\parindent{0pt}
+\setlength\parskip{0.55em}
+\setlist{itemsep=0.2em,topsep=0.3em}
+
+\usepackage{titlesec}
+\titleformat{\section}{\Large\sffamily\bfseries\color{cfaccent}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\sffamily\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.6em}
+
+% ---------------------------------------------------------------- code
+\lstdefinestyle{cf}{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  upquote=true,
+  moredelim=[is][\color{cfcode}]{|}{|},
+}
+\tcbset{
+  cfbox/.style={
+    enhanced, colback=cfback, colframe=cfrule, boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    listing options={style=cf},
+  },
+}
+% code on the left, result on the right
+\newtcblisting{example}{
+  cfbox, listing side text, righthand width=0.42\linewidth,
+  halign lower=center, valign lower=center,
+  segmentation style={draw=cfrule,solid}
+}
+% code above, result below (wide molecules)
+\newtcblisting{examplewide}{
+  cfbox, text above listing=false, listing above text,
+  halign lower=center, segmentation style={draw=cfrule,solid}
+}
+% code only
+\newtcblisting{code}{cfbox, listing only}
+
+\newcommand\cs[1]{\texttt{\textbackslash#1}}
+\newcommand\meta[1]{\ensuremath\langle\textit{#1}\ensuremath\rangle}
+\newcommand\key[1]{\texttt{\color{cfcode}#1}}
+\newcommand\frag[1]{\texttt{!\{#1\}}}
+\newcommand\pkg[1]{\textsf{#1}}
+
+% ring gallery
+\newcommand\ringnum[1]{\scriptstyle\color{cfaccent}#1}
+\newcommand\ringcell[2]{%
+  \begin{minipage}[b]{0.235\linewidth}\centering
+    #2\\[2pt]{\small\texttt{#1}}\par\medskip
+  \end{minipage}\hfill}
+
+% the drawings of the manual
+\setchemfig{atom sep=2em}
+
+\title{\sffamily\bfseries\color{cfaccent}chemfrag\\[0.3em]
+  \large\color{black}\mdseries Ready-made rings, chains and functional groups for \pkg{chemfig}}
+\author{Vaibhav Blayer}
+\date{Version \chemfragversion\ --- 2026-11-25}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{center}
+\setchemfig{atom sep=1.8em}
+\chemfig{!{benzene*}{2=NO_2, 4=Cl}-[::0]!{OH}}\hfill
+\chemfig{H_3C-!{benzene*}{exit=4}-[::0]!{carboxyl}}\hfill
+\chemfig{!{chain}{6, 2=CH_3, 4=OH}}\hfill
+\chemfig{!{pyridine*}{entry=3, circle}-[::0]!{COOH}}
+\end{center}
+
+\begin{abstract}
+\pkg{chemfrag} adds building blocks to \pkg{chemfig}: rings, zigzag chains
+and functional groups. A fragment is not a picture but a \pkg{chemfig}
+\emph{submolecule} that turns into ordinary \pkg{chemfig} code. You keep
+writing \cs{chemfig}\{\dots\} exactly as before and drop fragments in wherever
+they help. You can continue with hand-written \pkg{chemfig} code from any
+fragment, and attach fragments to any hand-written structure.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Introduction}
+
+Drawing a substituted benzene with \pkg{chemfig} means writing the ring by
+hand and placing every substituent inside it:
+\begin{example}
+\chemfig{*6((-OH)=(-NO_2)-=(-Cl)-=-)}
+\end{example}
+That is precise, but you have to remember which bond comes first, where the
+branches go and which way the ring is drawn. With \pkg{chemfrag} the same
+molecule is a ring with options:
+\begin{example}
+\chemfig{!{benzene*}{1=OH, 2=NO_2, 4=Cl}}
+\end{example}
+The second line produces the \emph{same} \pkg{chemfig} code as the first.
+That is the whole idea of the package:
+\begin{itemize}
+  \item \textbf{It never draws anything itself.} Every fragment expands to
+        plain \pkg{chemfig} code. All \pkg{chemfig} settings (\cs{setchemfig},
+        bond styles, \cs{chemmove}, schemes) keep working.
+  \item \textbf{It mixes with hand-written code in both directions.} Start
+        from a fragment and continue in \pkg{chemfig}, or start in
+        \pkg{chemfig} and attach a fragment.
+  \item \textbf{Fragments are numbered like in IUPAC names}, so
+        ``2-nitro-4-chlorophenol'' turns into keys almost word for word.
+\end{itemize}
+
+\subsection{Installation}
+\pkg{chemfrag} needs \pkg{chemfig} 1.6 or later and a recent \LaTeX{}
+(2022 or later). Put the files \texttt{chemfrag.sty} and
+\texttt{chemfrag-*.code.tex} where \TeX{} can find them (or install the
+package from CTAN with your distribution), then load it:
+\begin{code}
+\usepackage{chemfrag}   % loads chemfig
+\end{code}
+
+% =====================================================================
+\section{The five-minute tour}
+
+\paragraph{Plain fragments.} \frag{benzene}, \frag{cyclohexane},
+\frag{pyridine}, \frag{OH}, \frag{COOH}\dots{} are \pkg{chemfig}
+submolecules. Use them anywhere in \cs{chemfig}:
+\begin{example}
+\chemfig{!{benzene}}\quad
+\chemfig{!{cyclohexane}}\quad
+\chemfig{!{furan}}
+\end{example}
+
+\paragraph{Fragments with options.} Add a star and a list of keys. Numbers
+are positions on the ring:
+\begin{example}
+\chemfig{!{benzene*}{1=CH_3, 2=NO_2, 4=NO_2, 6=NO_2}}
+\end{example}
+
+\paragraph{Continuing with chemfig.} After a ring, \pkg{chemfig} goes on
+from the \emph{exit atom} (atom~1 by default) and the bond
+\verb|-[::0]| points straight out of the ring. From there you write normal
+\pkg{chemfig}:
+\begin{example}
+\chemfig{!{benzene}-[::0]C(=[::60]O)-[::-60]OH}
+\end{example}
+or attach another fragment:
+\begin{example}
+\chemfig{!{benzene}-[::0]!{carboxyl}}
+\end{example}
+
+\paragraph{Joining fragments.} A ring reached through a bond leaves on the
+opposite atom, so fragments line up:
+\begin{example}
+\chemfig{!{NO2}-!{benzene}-[::0]!{benzene}-[::0]!{NH2}}
+\end{example}
+
+\paragraph{Chains.} \frag{chain}\verb|{n}| draws a zigzag chain of $n$
+atoms, with substituents and double bonds by number:
+\begin{example}
+\chemfig{!{chain}{5, 2=CH_3, double=3}-[::0]!{OH}}
+\end{example}
+
+\paragraph{Functional groups} read the right way round by themselves:
+\begin{example}
+\chemfig{!{COOH}-[:180]!{benzene*}{exit=4}-[::0]!{COOH}}
+\end{example}
+
+% =====================================================================
+\section{Concepts}
+
+\subsection{Plain and starred fragments}
+Each ring \meta{name} exists twice:
+\begin{center}
+\begin{tabular}{>{\ttfamily}l l}
+\toprule
+!\{\meta{name}\}            & the ring with default settings\\
+!\{\meta{name}*\}\{\meta{keys}\} & the ring with options \\
+\bottomrule
+\end{tabular}
+\end{center}
+The starred form \emph{always} needs its braces, even if they are empty.
+\pkg{chemfig} cannot tell whether an argument follows a submolecule when
+the submolecule ends the molecule, so the star tells it.
+\frag{chain} always takes an argument and has no star.
+
+\subsection{Numbering}
+\begin{itemize}
+  \item Atom \key{1} is the atom where the ring is entered: the atom a
+        bond arrives at, or the first atom of a ring that starts the molecule.
+  \item Numbers increase counter-clockwise. Use \key{clockwise} to reverse
+        them.
+  \item \key{entry=}\meta{n} gives the entry atom another number. This is
+        how you attach a pyridine by its carbon~3, for example.
+\end{itemize}
+Every key that takes a position (substituents, \key{atoms}, \key{bonds},
+\key{exit}, \key{name}) uses this numbering.
+
+\begin{example}
+\chemfig{H_3C-!{pyridine*}{entry=3}}\quad
+\chemfig{!{benzene*}{clockwise, 2=OH, 3=Cl}}
+\end{example}
+
+\subsection{Where drawing continues: the exit atom}
+\pkg{chemfig} itself always continues a ring from the atom where the ring
+started. \pkg{chemfrag} adds two invisible bonds after the ring: one to its
+centre and one out to the \emph{exit atom}. The next bond therefore starts
+on the exit atom, and the \emph{relative} angle \verb|[::0]| points straight
+out of the ring.
+\begin{itemize}
+  \item A ring that \textbf{starts the molecule} exits on atom~1.
+  \item A ring \textbf{reached through a bond} exits on the opposite atom
+        (atom~4 of a six-membered ring).
+  \item \key{exit=}\meta{n} chooses any atom; \key{exit=none} removes the
+        invisible bonds and gives plain \pkg{chemfig} behaviour.
+\end{itemize}
+\begin{example}
+\chemfig{!{benzene*}{exit=2}-[::0]CH_3}\quad
+\chemfig{!{benzene*}{exit=3}-[::0]CH_3}\quad
+\chemfig{!{benzene*}{exit=4}-[::0]CH_3}
+\end{example}
+
+\begin{tcolorbox}[cfbox,colback=yellow!6,colframe=orange!40,title={\sffamily Why
+\texttt{-[::0]} and not just \texttt{-}?},coltitle=black,colbacktitle=orange!15]
+In \pkg{chemfig} a bond without an angle is horizontal (\verb|[:0]|), whatever
+came before. That is useful in a straight chain but would cut through a
+ring. The relative angle \verb|[::0]| means ``continue in the direction of
+the last bond'', which after a fragment is straight outwards. You can also
+use \verb|[::60]|, \verb|[::-60]| or any absolute angle such as
+\verb|[:90]| or \verb|[2]|.
+\end{tcolorbox}
+
+\subsection{Substituents}
+A key \meta{n}\verb|=|\meta{chemfig code} puts a branch on atom \meta{n}.
+\begin{itemize}
+  \item Without a bond of its own, the substituent gets a single bond, and
+        \pkg{chemfig} points it away from the ring.
+  \item It may start with its own bond: \verb|1={=O}|, \verb|2={~N}|,
+        \verb|3={-[::30]R}|. Values that contain \verb|=| or \verb|,| must be
+        put in braces.
+  \item It can be any \pkg{chemfig} code, including other fragments.
+\end{itemize}
+\begin{example}
+\chemfig{!{cyclohexane*}{1={=O}, 3=CH_3}}\quad
+\chemfig{!{benzene*}{1=!{carboxyl}, 2={-O-[::60]!{acetyl}}}}
+\end{example}
+
+% =====================================================================
+\section{Rings}
+
+\subsection{Keys}
+\begin{longtable}{>{\raggedright}p{0.27\linewidth} p{0.65\linewidth}}
+\toprule
+\textbf{Key} & \textbf{Meaning}\\\midrule\endhead
+\key{\meta{n}=\meta{code}} & substituent on atom \meta{n} (see above)\\
+\key{exit=\meta{n}|none} & atom where drawing continues; default 1 at the start
+  of a molecule, otherwise the opposite atom\\
+\key{entry=\meta{n}} & number of the atom where the ring is entered (default 1)\\
+\key{clockwise} & number the atoms clockwise\\
+\key{circle} & draw an aromatic circle instead of alternating double bonds\\
+\key{atoms=\{\meta{n}=\meta{atom},\dots\}} & atoms of the ring, e.g.\
+  \verb|atoms={1=N}|; replaces the built-in list\\
+\key{bonds=\meta{pattern}} & bonds of the ring, one character per bond;
+  bond \meta{i} joins atoms \meta{i} and \meta{i}+1, e.g.\ \verb|bonds={=-=---}|\\
+\key{size=\meta{n}} & number of atoms (for \frag{ring*})\\
+\key{name=\meta{prefix}} & name the atoms \meta{prefix}1, \meta{prefix}2,
+  \dots{} for \cs{chemmove}\\
+\bottomrule
+\end{longtable}
+Keys given to the fragment override \cs{chemfragset} defaults, which override
+the built-in settings of the ring. A flag can be switched off again with
+\key{=false}, e.g.\ \verb|circle=false|.
+
+\subsection{Built-in rings}
+The small numbers show the default numbering. Each drawing was made with
+the starred fragment of the ring, with the numbers given as substituents.
+
+\medskip
+\noindent
+\input{chemfrag-gallery.tex}
+
+\medskip
+Fused rings are available as plain fragments without options:
+\frag{naphthalene}, \frag{anthracene} and \frag{indole}.
+\begin{example}
+\chemfig{!{naphthalene}}\quad
+\chemfig{!{indole}}
+\end{example}
+
+\subsection{Any ring}
+\frag{ring*} draws any ring from scratch:
+\begin{example}
+\chemfig{!{ring*}{size=7, bonds={=-=-=--}, 3=Br}}
+\end{example}
+
+\subsection{More examples}
+\begin{example}
+\chemfig{!{benzene*}{circle, 1=OH, 4=NO_2}}
+\end{example}
+\begin{example}
+\chemfig{!{furan*}{2=CHO}}\quad
+\chemfig{!{thiophene*}{2=CH_3}}
+\end{example}
+\begin{example}
+\chemfig{!{piperidine*}{1=, exit=1}-[::0]!{acetyl}}
+\end{example}
+
+% =====================================================================
+\section{Chains}
+
+\frag{chain}\verb|{|\meta{keys}\verb|}| draws a zigzag chain. It starts on the
+current atom (C1), so \verb|R-!{chain}{3}| is a propyl group on R. All angles are
+relative, so the chain follows whatever bond leads into it.
+
+\begin{longtable}{>{\raggedright}p{0.27\linewidth} p{0.65\linewidth}}
+\toprule
+\textbf{Key} & \textbf{Meaning}\\\midrule\endhead
+\key{\meta{n}} or \key{n=\meta{n}} & number of atoms (default 3)\\
+\key{\meta{k}=\meta{code}} & substituent on atom \meta{k}\\
+\key{start=up|down} & direction of the first zig (default \texttt{up})\\
+\key{double=\{\dots\}}, \key{triple=\{\dots\}} & numbers of double / triple
+  bonds; bond \meta{j} joins atoms \meta{j} and \meta{j}+1\\
+\key{bonds=\meta{pattern}} & bond characters one by one\\
+\key{atoms=\{\meta{k}=\meta{atom},\dots\}} & heteroatoms in the chain\\
+\key{name=\meta{prefix}} & atom names for \cs{chemmove}\\
+\key{exit=none} & no final turn (see below)\\
+\bottomrule
+\end{longtable}
+
+After the last atom the chain turns invisibly towards the next zig, so
+\verb|-[::0]| continues the zigzag.
+\begin{example}
+\chemfig{!{chain}{6, 2=CH_3, 4=OH}}
+\end{example}
+\begin{example}
+\chemfig{!{chain}{4, double=2, start=down}}\quad
+\chemfig{!{chain}{5, atoms={3=O}}}
+\end{example}
+\begin{example}
+\chemfig{!{chain}{3, triple=2}-[::0]!{OH}}
+\end{example}
+\begin{example}
+\chemfig{!{benzene}-[::0]!{chain}{3}-[::0]!{OH}}
+\end{example}
+
+% =====================================================================
+\section{Functional groups}
+
+\subsection{Condensed groups}
+These groups are written as formulas. Like all \pkg{chemfig} submolecules
+defined with two versions, they read from the ring outwards: when the bond
+arrives from the right, the mirrored formula is used.
+
+\medskip
+\begin{center}\small
+\begin{tabular}{>{\ttfamily}l c c @{\qquad} >{\ttfamily}l c c}
+\toprule
+\normalfont fragment & right & left & \normalfont fragment & right & left\\\midrule
+!\{OH\}    & \chemfig{-!{OH}}    & \chemfig{-[4]!{OH}}    & !\{CN\}    & \chemfig{-!{CN}}    & \chemfig{-[4]!{CN}}\\
+!\{SH\}    & \chemfig{-!{SH}}    & \chemfig{-[4]!{SH}}    & !\{COOH\}  & \chemfig{-!{COOH}}  & \chemfig{-[4]!{COOH}}\\
+!\{NH2\}   & \chemfig{-!{NH2}}   & \chemfig{-[4]!{NH2}}   & !\{COOMe\} & \chemfig{-!{COOMe}} & \chemfig{-[4]!{COOMe}}\\
+!\{NHMe\}  & \chemfig{-!{NHMe}}  & \chemfig{-[4]!{NHMe}}  & !\{COOEt\} & \chemfig{-!{COOEt}} & \chemfig{-[4]!{COOEt}}\\
+!\{NMe2\}  & \chemfig{-!{NMe2}}  & \chemfig{-[4]!{NMe2}}  & !\{COCl\}  & \chemfig{-!{COCl}}  & \chemfig{-[4]!{COCl}}\\
+!\{NO2\}   & \chemfig{-!{NO2}}   & \chemfig{-[4]!{NO2}}   & !\{CONH2\} & \chemfig{-!{CONH2}} & \chemfig{-[4]!{CONH2}}\\
+!\{CHO\}   & \chemfig{-!{CHO}}   & \chemfig{-[4]!{CHO}}   & !\{COMe\}  & \chemfig{-!{COMe}}  & \chemfig{-[4]!{COMe}}\\
+!\{OMe\}   & \chemfig{-!{OMe}}   & \chemfig{-[4]!{OMe}}   & !\{Me\}    & \chemfig{-!{Me}}    & \chemfig{-[4]!{Me}}\\
+!\{OEt\}   & \chemfig{-!{OEt}}   & \chemfig{-[4]!{OEt}}   & !\{Et\}    & \chemfig{-!{Et}}    & \chemfig{-[4]!{Et}}\\
+!\{OAc\}   & \chemfig{-!{OAc}}   & \chemfig{-[4]!{OAc}}   & !\{CF3\}   & \chemfig{-!{CF3}}   & \chemfig{-[4]!{CF3}}\\
+!\{SO3H\}  & \chemfig{-!{SO3H}}  & \chemfig{-[4]!{SO3H}}  & !\{CCl3\}  & \chemfig{-!{CCl3}}  & \chemfig{-[4]!{CCl3}}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{At the start of a molecule} no bond arrives, so \pkg{chemfig}
+uses the right-hand form. If the molecule goes off to the right, write
+the formula yourself (\verb|HO-...|), or start the molecule with the bond
+pointing left as in the tour (\verb|!{COOH}-[:180]...|).
+
+\subsection{Structural groups}
+These are drawn as skeletal formulas with relative angles, so they fit any
+direction. The C=O goes to the left of the direction of travel. Add a prime
+(\verb|'|) to the name for the mirror image.
+
+\medskip
+\begin{center}\small
+\renewcommand\arraystretch{3.4}
+\begin{tabular}{>{\ttfamily}l c @{\qquad} >{\ttfamily}l c}
+\toprule
+\normalfont fragment & drawing & \normalfont fragment & drawing\\\midrule
+!\{carboxyl\}     & \chemfig{-!{carboxyl}}     & !\{carboxyl'\}     & \chemfig{-!{carboxyl'}}\\
+!\{aldehyde\}     & \chemfig{-!{aldehyde}}     & !\{ester\}         & \chemfig{-!{ester}}\\
+!\{amide\}        & \chemfig{-!{amide}}        & !\{acylchloride\}  & \chemfig{-!{acylchloride}}\\
+!\{acetyl\}       & \chemfig{-!{acetyl}}       & !\{carbonyl\}      & \chemfig{-!{carbonyl}}\\
+!\{nitro\}        & \chemfig{-!{nitro}}        & !\{nitrile\}       & \chemfig{-!{nitrile}}\\
+!\{sulfonyl\}     & \chemfig{-!{sulfonyl}-}    &                    & \\
+\bottomrule
+\end{tabular}
+\end{center}
+All structural groups except \texttt{nitrile} and \texttt{sulfonyl} have a
+primed version.
+
+\begin{example}
+\chemfig{!{benzene*}{exit=3}-[::0]!{ester'}}
+\end{example}
+
+% =====================================================================
+\section{Customising}
+
+\subsection{Defaults}
+\cs{chemfragset}\verb|{|\meta{keys}\verb|}| sets default keys for every following
+fragment in the current group. Keys given to a fragment still win.
+\begin{example}
+\chemfragset{circle}
+\chemfig{!{benzene}}\quad
+\chemfig{!{pyridine}}\quad
+\chemfig{!{benzene*}{circle=false}}
+\end{example}
+
+\subsection{New rings}
+\cs{chemfragdefinering}\verb|{|\meta{name}\verb|}{|\meta{keys}\verb|}| defines
+\frag{\meta{name}} and \frag{\meta{name}*}. The keys are the defaults of the new
+ring.
+\begin{example}
+\chemfragdefinering{oxetane}
+  {size=4, bonds={----}, atoms={1=O}}
+\chemfig{!{oxetane*}{3=CH_3}}
+\end{example}
+
+\subsection{New groups}
+Groups are plain \pkg{chemfig}; define your own with \cs{definesubmol}. The
+optional argument is the code used when the bond comes from the right:
+\begin{example}
+\definesubmol{NHAc}[AcHN]{NHAc}
+\chemfig{!{benzene*}{exit=4}-[::0]!{NHAc}}
+\end{example}
+
+\subsection{The engine behind the fragments}
+The fragments are thin wrappers around two macros:
+\begin{center}
+\begin{tabular}{>{\ttfamily}l@{\quad is short for\quad}>{\ttfamily}l}
+!\{benzene*\}\{...\} & !\textbackslash chemfragring\{benzene\}\{...\}\\
+!\{chain\}\{...\}    & !\textbackslash chemfragchain\{...\}
+\end{tabular}
+\end{center}
+Both macros are fully expandable and expand to \pkg{chemfig} code:
+\begin{code}
+\chemfragring{benzene}{2=NO_2, 4=Cl}
+% gives (in the middle of a molecule)
+*6(=(-NO_2)-=(-Cl)-=-)-[::0,1,,,draw=none]-[::0,1,,,draw=none]
+\end{code}
+
+% =====================================================================
+\section{Reaction mechanisms}
+\key{name=}\meta{prefix} names the atoms of a ring or chain, so you can
+draw arrows between them with \cs{chemmove} (two compilations needed):
+\begin{example}
+\chemfig{!{benzene*}{name=r, 1=OMe}}
+\chemmove[->,red,shorten <=2pt,shorten >=2pt]{
+  \draw (r2) .. controls +(-90:9mm)
+        and +(-30:9mm) .. (r3);}
+\end{example}
+
+% =====================================================================
+\section{Worked examples}
+
+\subsection*{Aspirin}
+\begin{example}
+\chemfig{!{benzene*}{2={-O-[::60]!{acetyl'}}}
+  -[::0]!{carboxyl}}
+\end{example}
+
+\subsection*{Paracetamol}
+\begin{example}
+\chemfig{HO-!{benzene}-[::0]N(-[::90]H)
+  -[::-60]!{acetyl'}}
+\end{example}
+
+\subsection*{Ibuprofen}
+\begin{examplewide}
+\chemfig{!{chain}{3, 2=CH_3}-[::0]!{benzene}
+  -[::0](-[::90]CH_3)-[::-60]!{carboxyl}}
+\end{examplewide}
+
+\subsection*{Vanillin}
+\begin{example}
+\chemfig{!{benzene*}{2=OMe, 4=CHO}-[::0]!{OH}}
+\end{example}
+
+\subsection*{Nicotinic acid}
+\begin{example}
+\chemfig{!{pyridine*}{entry=3}-[::0]!{carboxyl}}
+\end{example}
+
+\subsection*{A reaction}
+\begin{examplewide}
+\schemestart
+  \chemfig{!{benzene}-[::0]!{OH}}
+  \arrow{->[\chemfig{HNO_3}]}
+  \chemfig{!{benzene*}{4=NO_2}-[::0]!{OH}}
+  \+
+  \chemfig{!{benzene*}{2=NO_2}-[::0]!{OH}}
+\schemestop
+\end{examplewide}
+
+% =====================================================================
+\section{Notes and limitations}
+\begin{itemize}
+  \item Fragments work with \pkg{babel}'s French and other languages that
+        make \verb|!| or \verb|:| active, as long as \cs{chemfig} itself works.
+  \item Values with \verb|=| or \verb|,| must be braced:
+        \verb|1={=O}|, \verb|atoms={1=N,3=N}|.
+  \item A substituent on the entry atom of a ring that is reached through a
+        bond is ignored, because the incoming bond takes its place.
+  \item \pkg{chemfrag} reads \pkg{chemfig}'s internal state
+        (\verb|\CF_lastaction|) to tell whether a ring starts the molecule. If
+        a future \pkg{chemfig} removes it, rings behave as if a bond arrived
+        and still draw correctly.
+  \item \pkg{chemfig} drawings take a lot of computation, so documents with
+        hundreds of molecules compile slowly. \pkg{chemfrag} itself adds one
+        expansion pass and two invisible bonds per ring. To speed up a large
+        document, compile structures once with the \pkg{standalone} class or
+        TikZ externalization.
+\end{itemize}
+
+% =====================================================================
+\section{Change history}
+\begin{description}[font=\sffamily\bfseries]
+  \item[1.0.0 (2026-11-25)] First public release: 27 rings, generic rings,
+    chains, 23 condensed and 18 structural groups, \cs{chemfragset},
+    \cs{chemfragdefinering}, atom names for \cs{chemmove}.
+\end{description}
+
+\end{document}

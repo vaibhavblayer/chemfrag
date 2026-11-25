@@ -1,0 +1,50 @@
+% Regression test: the chemfig code produced by chemfrag fragments.
+\input{regression-test}
+\documentclass{article}
+\usepackage{chemfrag}
+\ExplSyntaxOn
+\cs_new_protected:Npn \testcode #1
+  {
+    \tl_set:Ne \l_tmpa_tl {#1}
+    \TYPE { \tl_to_str:N \l_tmpa_tl }
+  }
+% what chemfig reports before it has drawn anything
+\cs_new_protected:Npn \startofmolecule { \cs_set_eq:NN \CF_lastaction \CF_zero }
+\ExplSyntaxOff
+\begin{document}
+\START
+\TEST{rings}{%
+  \testcode{\chemfragring{benzene}{}}%
+  \testcode{\chemfragring{benzene}{2=NO_2, 4=Cl}}%
+  \testcode{\chemfragring{benzene}{circle, exit=4, name=r}}%
+  \testcode{\chemfragring{pyridine}{entry=3}}%
+  \testcode{\chemfragring{benzene}{clockwise, 2=OH}}%
+  \testcode{\chemfragring{cyclohexane}{1={=O}, exit=none}}%
+  \testcode{\chemfragring{pyrrole}{}}%
+  \testcode{\chemfragring{pyrrole}{1=CH_3}}%
+  \testcode{\chemfragring{ring}{size=7, bonds={=-=-=--}}}%
+}
+\TEST{chains}{%
+  \testcode{\chemfragchain{5}}%
+  \testcode{\chemfragchain{n=4, start=down, double=2}}%
+  \testcode{\chemfragchain{6, 2=CH_3, 4=OH}}%
+  \testcode{\chemfragchain{5, atoms={3=O}, exit=none}}%
+  \testcode{\chemfragchain{3, triple=1}}%
+}
+\TEST{start of a molecule}{%
+  \startofmolecule
+  \testcode{\chemfragring{benzene}{}}%
+  \testcode{\chemfragring{pyrrole}{}}%
+  \testcode{\chemfragring{cyclopentane}{exit=3}}%
+  \testcode{\chemfragchain{4, 1=Cl}}%
+}
+\TEST{defaults}{%
+  \chemfragset{circle}%
+  \testcode{\chemfragring{benzene}{}}%
+  \testcode{\chemfragring{benzene}{circle=false}}%
+}
+\TEST{custom ring}{%
+  \chemfragdefinering{oxetane}{size=4, bonds={----}, atoms={1=O}}%
+  \testcode{\chemfragring{oxetane}{3=CH_3}}%
+}
+\END

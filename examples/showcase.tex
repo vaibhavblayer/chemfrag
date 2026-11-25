@@ -1,0 +1,36 @@
+% showcase.tex -- a sheet of chemfrag examples (compile twice for \chemmove)
+\documentclass[border=6pt,varwidth=17cm]{standalone}
+\usepackage{chemfrag}
+\setchemfig{atom sep=2em}
+\newcommand\T[2]{\begin{minipage}[b]{3.9cm}\centering #2\\[2pt]\scriptsize #1\end{minipage}}
+\begin{document}
+\T{chain 5}{\chemfig{!{chain}{5}}}
+\T{chain 6, 2=Me, 4=OH}{\chemfig{!{chain}{6, 2=CH_3, 4=OH}}}
+\T{but-2-ene down}{\chemfig{!{chain}{4, double=2, start=down}}}
+\T{chain then OH}{\chemfig{!{chain}{4}-[::0]!{OH}}}
+
+\T{pyridine entry=3}{\chemfig{H_3C-!{pyridine*}{entry=3}}}
+\T{pyrrole}{\chemfig{!{pyrrole}}}
+\T{furan, 2=CHO}{\chemfig{!{furan*}{2=CHO}}}
+\T{circle}{\chemfig{!{benzene*}{circle, 1=OH, 4=NO_2}}}
+
+\T{cyclohexane exit=1 carboxyl}{\chemfig{!{cyclohexane}-[::0]!{carboxyl}}}
+\T{benzaldehyde aldehyde}{\chemfig{!{benzene}-[::0]!{aldehyde}}}
+\T{ester right}{\chemfig{!{benzene*}{exit=3}-[::0]!{ester}}}
+\T{ring*: 7}{\chemfig{!{ring*}{size=7, bonds={=-=-=--}, 3=Br}}}
+
+\T{biphenyl}{\chemfig{!{benzene}-[::0]!{benzene}}}
+\T{clockwise 2=OH}{\chemfig{!{benzene*}{clockwise, 2=OH, 3=Cl}}}
+\T{=O substituent}{\chemfig{!{cyclohexane*}{1={=O}, 3=CH_3}}}
+\T{naphthalene}{\chemfig{!{naphthalene}}}
+
+\T{mechanism names}{\chemfig{!{benzene*}{name=r}}\chemmove{\draw[->,red](r2)..controls +(0,-1)..(r4);}}
+\T{piperidine N exit}{\chemfig{!{piperidine*}{1=,exit=1}-[::0]C(=[::60]O)-[::-60]CH_3}}
+\T{chain atoms O}{\chemfig{!{chain}{5, atoms={3=O}}}}
+\T{chain to ring}{\chemfig{!{benzene}-[::0]!{chain}{3}-[::0]!{OH}}}
+
+\T{left groups}{\chemfig{!{COOH}-[:0]!{benzene*}{exit=4}-[::0]!{NO2}}}
+\T{nitro, nitrile}{\chemfig{!{benzene*}{exit=4}-[::0]!{nitro}}}
+\T{chemfig continues}{\chemfig{!{benzene*}{exit=2}-[::0]C(-[::90]CH_3)(-[::-90]CH_3)-[::0]CH_3}}
+\T{imidazole}{\chemfig{!{imidazole}}}
+\end{document}

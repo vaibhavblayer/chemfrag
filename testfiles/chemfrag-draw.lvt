@@ -1,0 +1,21 @@
+% Smoke test: fragments inside \chemfig must typeset without errors.
+\input{regression-test}
+\documentclass{article}
+\usepackage{chemfrag}
+\begin{document}
+\START
+\newbox\testbox
+\setbox\testbox\hbox{%
+  \chemfig{!{benzene}-[::0]!{OH}}%
+  \chemfig{!{benzene*}{2=NO_2,4=Cl}-[::0]!{OH}}%
+  \chemfig{H_3C-!{benzene*}{exit=4}-[::0]!{COOH}}%
+  \chemfig{!{chain}{6, 2=CH_3, 4=OH}-[::0]!{OH}}%
+  \chemfig{!{pyridine*}{entry=3, circle}}%
+  \chemfig{!{cyclohexane}-[::0]!{carboxyl}}%
+  \chemfig{!{benzene*}{exit=3}-[::0]!{ester'}}%
+  \chemfig{!{piperidine*}{1=, exit=1}-[::0]!{acetyl}}%
+  \chemfig{!{naphthalene}}%
+  \chemfig{!{ring*}{size=7, bonds={=-=-=--}, 3=Br}}%
+}
+\TYPE{width>0: \ifdim\wd\testbox>0pt yes\else no\fi}
+\END

@@ -1,0 +1,301 @@
+%% chemfrag-rings.code.tex -- ring fragments of the chemfrag package
+%%
+%% Copyright (C) 2026 Vaibhav Blayer
+%% LaTeX Project Public License 1.3c or later (see chemfrag.sty).
+%%
+%% ---------------------------------------------------------------------------
+%% Geometry
+%% ---------------------------------------------------------------------------
+%% chemfig draws a ring "*<n>(...)" from the current atom ("position 1"),
+%% counter-clockwise when seen along the incoming bond, with the centre of the
+%% ring straight ahead of that bond.  After the closing parenthesis chemfig
+%% is back on position 1 and relative angles ("[::a]") refer to the incoming
+%% bond.  To *exit* at position p we add two invisible bonds:
+%%     position 1 --[::0, R]--> centre --[::180+(p-1)*360/n, R]--> position p
+%% with R = 1/(2 sin(180/n)), the circumradius in units of a bond length.
+%% The last bond then points straight outwards, so the user continues with
+%% "-[::0]" (straight on), "-[::60]", etc.
+%%
+%% A ring that starts a molecule has no incoming bond; we give it a tiny
+%% invisible one at 180/n degrees, which reproduces chemfig's usual
+%% orientation and makes the arithmetic above valid.
+%%
+%% Numbering: "entry" is the number of position 1 (default 1); numbers run
+%% counter-clockwise (or clockwise with "clockwise").  All user keys
+%% (substituents, atoms, bonds, exit) use these numbers.
+%% ---------------------------------------------------------------------------
+
+%% \chemfragring{<ring name>}{<keys>}  -- expandable, see core file.
+%% An empty <ring name> gives the generic ring (size=..., bonds=...).
+\cs_new:Npn \chemfragring #1#2
+  { \exp:w \exp_after:wN \exp_end: \expanded { \__chemfrag_ring:nn {#1} {#2} } }
+
+\cs_new:Npn \__chemfrag_ring:nn #1#2
+  {
+    \tl_if_blank:nTF {#1}
+      { \__chemfrag_ring_data:nnV {#2} { } \l__chemfrag_defaults_tl }
+      {
+        \cs_if_exist:cTF { g__chemfrag_ring_#1_tl }
+          {
+            \__chemfrag_ring_data:nvV {#2} { g__chemfrag_ring_#1_tl }
+              \l__chemfrag_defaults_tl
+          }
+          { \msg_expandable_error:nnn { chemfrag } { unknown-ring } {#1} }
+      }
+  }
+\cs_new:Npn \__chemfrag_ring_data:nnn #1#2#3
+  { \__chemfrag_ring_main:n { #1 , #3 , #2 } }
+\cs_generate_variant:Nn \__chemfrag_ring_data:nnn { nnV , nvV }
+
+%% Collect the numbers that drive the drawing:
+%%   {n} {entry} {clockwise 0/1} {standalone 0/1} {circle 0/1}
+\cs_new:Npn \__chemfrag_ring_main:n #1
+  {
+    \exp_args:Ne \__chemfrag_ring_main_a:nn
+      {
+        { \__chemfrag_int:nnn {#1} { size } { 6 } }
+        { \__chemfrag_int:nnn {#1} { entry } { 1 } }
+        { \__chemfrag_if_on:nnTF {#1} { clockwise } { 1 } { 0 } }
+        { \__chemfrag_if_standalone:TF { 1 } { 0 } }
+        { \__chemfrag_if_on:nnTF {#1} { circle } { 1 } { 0 } }
+      }
+      {#1}
+  }
+\cs_new:Npn \__chemfrag_ring_main_a:nn #1#2
+  { \__chemfrag_ring_main_b:nnnnnn #1 {#2} }
+\cs_new:Npn \__chemfrag_ring_main_b:nnnnnn #1#2#3#4#5#6
+  {
+    \exp_args:Ne \__chemfrag_ring_emit:nnnnnnn
+      { \__chemfrag_ring_exit:nnnnn {#1} {#2} {#3} {#4} {#6} }
+      {#1} {#2} {#3} {#4} {#5} {#6}
+  }
+
+%% Position (1 = entry atom) of the atom numbered #4, and the reverse.
+%%   #1 = n, #2 = entry, #3 = clockwise (0/1)
+\cs_new:Npn \__chemfrag_ring_pos:nnnn #1#2#3#4
+  {
+    \int_eval:n
+      {
+        \int_mod:nn
+          {
+            \int_compare:nNnTF {#3} = { 1 } { (#2) - (#4) } { (#4) - (#2) }
+            + 100 * (#1)
+          }
+          {#1}
+        + 1
+      }
+  }
+\cs_new:Npn \__chemfrag_ring_num:nnnn #1#2#3#4
+  {
+    \int_eval:n
+      {
+        \int_mod:nn
+          {
+            \int_compare:nNnTF {#3} = { 1 } { (#2) - (#4) } { (#2) + (#4) - 2 }
+            + 100 * (#1)
+          }
+          {#1}
+        + 1
+      }
+  }
+
+%% Exit position (0 = no exit).  Default: position 1 for a ring that starts
+%% the molecule, the opposite atom for a ring reached through a bond.
+%%   #1 = n, #2 = entry, #3 = clockwise, #4 = standalone, #5 = keys
+\cs_new:Npn \__chemfrag_ring_exit:nnnnn #1#2#3#4#5
+  {
+    \exp_args:Ne \__chemfrag_ring_exit_aux:nnnnn
+      { \__chemfrag_get:nnn {#5} { exit } { auto } }
+      {#1} {#2} {#3} {#4}
+  }
+\cs_new:Npn \__chemfrag_ring_exit_aux:nnnnn #1#2#3#4#5
+  {
+    \str_case:nnF {#1}
+      {
+        { none } { 0 }
+        { auto }
+          {
+            \int_compare:nNnTF {#5} = { 1 }
+              { 1 }
+              { \int_eval:n { \int_div_truncate:nn {#2} { 2 } + 1 } }
+          }
+      }
+      { \__chemfrag_ring_pos:nnnn {#2} {#3} {#4} {#1} }
+  }
+
+%% The ring itself.
+%%   #1 = exit position, #2 = n, #3 = entry, #4 = clockwise,
+%%   #5 = standalone, #6 = circle, #7 = keys
+\cs_new:Npn \__chemfrag_ring_emit:nnnnnnn #1#2#3#4#5#6#7
+  {
+    % tiny entry bond for a ring that starts the molecule
+    \int_compare:nNnT {#5} = { 1 }
+      { \__chemfrag_jump:nn { \fp_eval:n { round(180/#2, 4) } } { 0.01 } }
+    % atom of position 1, then the ring opening
+    \__chemfrag_name:nn {#7} {#3}
+    \__chemfrag_atom:nn {#7} {#3}
+    \int_compare:nNnTF {#6} = { 1 } { ** } { * }
+    #2 (
+    % a substituent on position 1 only when no bond arrives there
+    \int_compare:nNnT {#5} = { 1 } { \__chemfrag_branch:nnn {#7} {#3} { } }
+    \__chemfrag_ring_loop:nnnnnn { 2 } {#2} {#3} {#4} {#6} {#7}
+    \__chemfrag_ring_bond:nnnnnn {#2} {#2} {#3} {#4} {#6} {#7}
+    )
+    % exit: jump to the centre, then out to the exit atom
+    \int_compare:nNnF {#1} = { 0 }
+      {
+        \__chemfrag_jump:nn { 0 }
+          { \fp_eval:n { round(1/(2*sind(180/#2)), 5) } }
+        \__chemfrag_jump:nn
+          {
+            \fp_eval:n
+              {
+                round(180 + (#1 - 1) * 360 / #2
+                  - 360 * trunc((180 + (#1 - 1) * 360 / #2) / 360), 4)
+              }
+          }
+          { \fp_eval:n { round(1/(2*sind(180/#2)), 5) } }
+        \exp_args:Nne \__chemfrag_phantom:nn {#7}
+          { \__chemfrag_ring_num:nnnn {#2} {#3} {#4} {#1} }
+      }
+  }
+
+%% Positions 2..n:  <bond> @{name} <atom> (<substituent>)
+%%   #1 = position, #2 = n, #3 = entry, #4 = clockwise, #5 = circle, #6 = keys
+\cs_new:Npn \__chemfrag_ring_loop:nnnnnn #1#2#3#4#5#6
+  {
+    \int_compare:nNnF {#1} > {#2}
+      {
+        \__chemfrag_ring_bond:nnnnnn { \int_eval:n { #1 - 1 } } {#2} {#3} {#4} {#5} {#6}
+        \exp_args:Ne \__chemfrag_ring_vertex:nn
+          { \__chemfrag_ring_num:nnnn {#2} {#3} {#4} {#1} } {#6}
+        \exp_args:Ne \__chemfrag_ring_loop:nnnnnn
+          { \int_eval:n { #1 + 1 } } {#2} {#3} {#4} {#5} {#6}
+      }
+  }
+\cs_new:Npn \__chemfrag_ring_vertex:nn #1#2
+  {
+    \__chemfrag_name:nn {#2} {#1}
+    \__chemfrag_atom:nn {#2} {#1}
+    \__chemfrag_branch:nnn {#2} {#1} { }
+  }
+
+%% Bond <q> joins positions q and q+1.  In the numbering of the user it is
+%% bond number min-side: the bond "i" joins atoms i and i+1.
+%%   #1 = q, #2 = n, #3 = entry, #4 = clockwise, #5 = circle, #6 = keys
+\cs_new:Npn \__chemfrag_ring_bond:nnnnnn #1#2#3#4#5#6
+  {
+    \int_compare:nNnTF {#5} = { 1 }
+      { - }
+      {
+        \exp_args:Ne \__chemfrag_ring_bond_aux:nn
+          {
+            \int_compare:nNnTF {#4} = { 1 }
+              { \__chemfrag_ring_num:nnnn {#2} {#3} {#4} { \int_mod:nn {#1} {#2} + 1 } }
+              { \__chemfrag_ring_num:nnnn {#2} {#3} {#4} {#1} }
+          }
+          {#6}
+      }
+  }
+\cs_new:Npn \__chemfrag_ring_bond_aux:nn #1#2
+  {
+    \exp_args:Ne \__chemfrag_bond_char:nn
+      { \__chemfrag_get:nnn {#2} { bonds } { } } {#1}
+  }
+
+%% ===========================================================================
+%% Defining rings
+%% ===========================================================================
+%% \chemfragdefinering{<name>}{<keys>} stores the default keys of a ring and
+%% creates the two chemfig submolecules
+%%     !{<name>}           plain ring
+%%     !{<name>*}{<keys>}  ring with options
+\cs_new_protected:Npn \chemfrag_define_ring:nn #1#2
+  {
+    \tl_gclear_new:c { g__chemfrag_ring_#1_tl }
+    \tl_gset:cn { g__chemfrag_ring_#1_tl } {#2}
+    \__chemfrag_submol:nn {#1} { !\chemfragring{#1}{} }
+    \__chemfrag_submol_arg:nn {#1*} { !\chemfragring{#1} }
+  }
+%% chemfig reads the code of \definesubmol with its own catcodes (in
+%% particular "#" is "other"), so the argument marker must be a "#" of
+%% catcode 12, exactly as if the user had typed it.
+%%   \__chemfrag_submol:nn     {<name>} {<code>}
+%%   \__chemfrag_submol_arg:nn {<name>} {<code>}   gives  <code>{#1}
+\cs_new_protected:Npn \__chemfrag_submol:nn #1#2
+  {
+    \use:e
+      {
+        \cs_if_exist:cTF { CF__#1 }
+          { \exp_not:N \redefinesubmol }
+          { \exp_not:N \definesubmol }
+        { \tl_to_str:n {#1} } { \exp_not:n {#2} }
+      }
+  }
+\cs_new_protected:Npn \__chemfrag_submol_arg:nn #1#2
+  {
+    \use:e
+      {
+        \cs_if_exist:cTF { CF__#1 }
+          { \exp_not:N \redefinesubmol }
+          { \exp_not:N \definesubmol }
+        { \tl_to_str:n {#1} } 1
+        { \exp_not:n {#2} { \c_hash_str 1 } }
+      }
+  }
+
+\NewDocumentCommand \chemfragdefinering { m m }
+  { \chemfrag_define_ring:nn {#1} {#2} }
+
+%% Generic ring:  !{ring*}{size=7, bonds={=-=----}, ...}
+\chemfrag_define_ring:nn { ring } { }
+
+%% ---------------------------------------------------------------------------
+%% Built-in rings.  Bond i joins atoms i and i+1 (bond n closes the ring).
+%% ---------------------------------------------------------------------------
+%% carbocycles
+\chemfrag_define_ring:nn { benzene }          { size = 6 , bonds = {=-=-=-} }
+\chemfrag_define_ring:nn { cyclopropane }     { size = 3 , bonds = {---} }
+\chemfrag_define_ring:nn { cyclobutane }      { size = 4 , bonds = {----} }
+\chemfrag_define_ring:nn { cyclopentane }     { size = 5 , bonds = {-----} }
+\chemfrag_define_ring:nn { cyclohexane }      { size = 6 , bonds = {------} }
+\chemfrag_define_ring:nn { cycloheptane }     { size = 7 , bonds = {-------} }
+\chemfrag_define_ring:nn { cyclooctane }      { size = 8 , bonds = {--------} }
+\chemfrag_define_ring:nn { cyclopentene }     { size = 5 , bonds = {=----} }
+\chemfrag_define_ring:nn { cyclohexene }      { size = 6 , bonds = {=-----} }
+\chemfrag_define_ring:nn { cyclopentadiene }  { size = 5 , bonds = {=-=--} }
+\chemfrag_define_ring:nn { cyclohexadiene }   { size = 6 , bonds = {=-=---} }
+%% aromatic heterocycles
+\chemfrag_define_ring:nn { pyridine }
+  { size = 6 , bonds = {=-=-=-} , atoms = { 1 = N } }
+\chemfrag_define_ring:nn { pyrimidine }
+  { size = 6 , bonds = {=-=-=-} , atoms = { 1 = N , 3 = N } }
+\chemfrag_define_ring:nn { pyrazine }
+  { size = 6 , bonds = {=-=-=-} , atoms = { 1 = N , 4 = N } }
+\chemfrag_define_ring:nn { pyrrole }
+  { size = 5 , bonds = {-=-=-} , atoms = { 1 = N } , 1 = H }
+\chemfrag_define_ring:nn { furan }
+  { size = 5 , bonds = {-=-=-} , atoms = { 1 = O } }
+\chemfrag_define_ring:nn { thiophene }
+  { size = 5 , bonds = {-=-=-} , atoms = { 1 = S } }
+\chemfrag_define_ring:nn { imidazole }
+  { size = 5 , bonds = {-=-=-} , atoms = { 1 = N , 3 = N } , 1 = H }
+\chemfrag_define_ring:nn { oxazole }
+  { size = 5 , bonds = {-=-=-} , atoms = { 1 = O , 3 = N } }
+\chemfrag_define_ring:nn { thiazole }
+  { size = 5 , bonds = {-=-=-} , atoms = { 1 = S , 3 = N } }
+%% saturated heterocycles
+\chemfrag_define_ring:nn { oxirane }
+  { size = 3 , bonds = {---} , atoms = { 1 = O } }
+\chemfrag_define_ring:nn { tetrahydrofuran }
+  { size = 5 , bonds = {-----} , atoms = { 1 = O } }
+\chemfrag_define_ring:nn { pyrrolidine }
+  { size = 5 , bonds = {-----} , atoms = { 1 = N } , 1 = H }
+\chemfrag_define_ring:nn { piperidine }
+  { size = 6 , bonds = {------} , atoms = { 1 = N } , 1 = H }
+\chemfrag_define_ring:nn { piperazine }
+  { size = 6 , bonds = {------} , atoms = { 1 = N , 4 = N } , 1 = H , 4 = H }
+\chemfrag_define_ring:nn { morpholine }
+  { size = 6 , bonds = {------} , atoms = { 1 = O , 4 = N } , 4 = H }
+\chemfrag_define_ring:nn { oxane }
+  { size = 6 , bonds = {------} , atoms = { 1 = O } }

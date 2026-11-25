@@ -1,0 +1,66 @@
+%% chemfrag-groups.code.tex -- functional groups of the chemfrag package
+%%
+%% Copyright (C) 2026 Vaibhav Blayer
+%% LaTeX Project Public License 1.3c or later (see chemfrag.sty).
+%%
+%% This file is read with normal LaTeX catcodes (not expl3): it is plain
+%% chemfig code.  Each \definesubmol below is ordinary chemfig.
+%%
+%% Condensed groups
+%% ----------------
+%% \definesubmol{<name>}[<code when the bond comes from the right>]{<code>}
+%% so the formula reads correctly on both sides of a structure:
+%%     \chemfig{!{OH}-[:0]...}   gives  HO--...
+%%     \chemfig{...-!{OH}}       gives  ...--OH
+\definesubmol{OH}[HO]{OH}
+\definesubmol{SH}[HS]{SH}
+\definesubmol{NH2}[H_2N]{NH_2}
+\definesubmol{NHMe}[H_3CHN]{NHCH_3}
+\definesubmol{NMe2}[(H_3C)_2N]{N(CH_3)_2}
+\definesubmol{NO2}[O_2N]{NO_2}
+\definesubmol{CN}[NC]{CN}
+\definesubmol{CHO}[OHC]{CHO}
+\definesubmol{COOH}[HOOC]{COOH}
+\definesubmol{COOMe}[H_3COOC]{COOCH_3}
+\definesubmol{COOEt}[H_5C_2OOC]{COOC_2H_5}
+\definesubmol{COCl}[ClOC]{COCl}
+\definesubmol{CONH2}[H_2NOC]{CONH_2}
+\definesubmol{COMe}[H_3COC]{COCH_3}
+\definesubmol{OMe}[H_3CO]{OCH_3}
+\definesubmol{OEt}[H_5C_2O]{OC_2H_5}
+\definesubmol{OAc}[AcO]{OAc}
+\definesubmol{Me}[H_3C]{CH_3}
+\definesubmol{Et}[H_5C_2]{C_2H_5}
+\definesubmol{CF3}[F_3C]{CF_3}
+\definesubmol{CCl3}[Cl_3C]{CCl_3}
+\definesubmol{SO3H}[HO_3S]{SO_3H}
+\definesubmol{Ph}[Ph]{Ph}
+%%
+%% Structural (skeletal) groups
+%% ----------------------------
+%% Drawn with angles relative to the bond that leads into them, so they work
+%% in any direction.  The C=O always goes to the left of the direction of
+%% travel; append "'" to the name for the mirror image.
+\definesubmol{carboxyl}{C(=[::60]O)-[::-60]!{OH}}
+\definesubmol{carboxyl'}{C(=[::-60]O)-[::60]!{OH}}
+\definesubmol{aldehyde}{C(=[::60]O)-[::-60]H}
+\definesubmol{aldehyde'}{C(=[::-60]O)-[::60]H}
+\definesubmol{ester}{C(=[::60]O)-[::-60]O-[::60]!{Me}}
+\definesubmol{ester'}{C(=[::-60]O)-[::60]O-[::-60]!{Me}}
+\definesubmol{amide}{C(=[::60]O)-[::-60]!{NH2}}
+\definesubmol{amide'}{C(=[::-60]O)-[::60]!{NH2}}
+\definesubmol{acylchloride}{C(=[::60]O)-[::-60]Cl}
+\definesubmol{acylchloride'}{C(=[::-60]O)-[::60]Cl}
+\definesubmol{acetyl}{C(=[::60]O)-[::-60]!{Me}}
+\definesubmol{acetyl'}{C(=[::-60]O)-[::60]!{Me}}
+\definesubmol{carbonyl}{C(=[::60]O)}
+\definesubmol{carbonyl'}{C(=[::-60]O)}
+\definesubmol{nitro}{N^{+}(=[::60]O)-[::-60]O^{-}}
+\definesubmol{nitro'}{N^{+}(=[::-60]O)-[::60]O^{-}}
+\definesubmol{sulfonyl}{S(=[::90]O)(=[::-90]O)}
+\definesubmol{nitrile}{C~[::0]N}
+%%
+%% Fused rings (plain chemfig code, no options)
+\definesubmol{naphthalene}{*6(-=*6(-=-=-)-=-=)}
+\definesubmol{anthracene}{*6(-=*6(-=*6(-=-=-)-=-)-=-=)}
+\definesubmol{indole}{*6(-=*5(-\chembelow{N}{H}-=-)-=-=)}
