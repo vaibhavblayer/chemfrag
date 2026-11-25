@@ -34,6 +34,8 @@ uploadconfig = {
   summary     = "Ready-made rings, chains and functional groups for chemfig",
   ctanPath    = "/macros/latex/contrib/chemfrag",
   topic       = {"chemistry"},
+  repository  = "https://github.com/vaibhavblayer/chemfrag",
+  bugtracker  = "https://github.com/vaibhavblayer/chemfrag/issues",
   description = [[
 chemfrag adds ready-made building blocks to chemfig: rings (benzene,
 cyclohexane, pyridine, furan, ...), zigzag chains and functional groups.

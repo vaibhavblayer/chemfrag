@@ -57,6 +57,10 @@ l3build ctan      # builds chemfrag-ctan.zip
 Layout: `tex/` (package code), `doc/` (manual), `testfiles/` (tests),
 `build.lua` (l3build configuration).
 
+## Bugs and ideas
+
+Please open an issue at <https://github.com/vaibhavblayer/chemfrag/issues>.
+
 ## License
 
 Copyright (C) 2026 Vaibhav Blayer.
