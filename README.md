@@ -18,6 +18,8 @@ any hand-written structure.
 \chemfig{!{pyridine*}{entry=3}-[::0]!{carboxyl}}        % nicotinic acid
 ```
 
+![chemfrag examples](examples/showcase.png)
+
 ## Features
 
 - **27 rings** (`benzene`, `cyclohexane`, `pyridine`, `furan`, `pyrrole`,
